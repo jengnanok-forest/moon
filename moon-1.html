@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多重月亮高度角與方位角觀測記錄表</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 900px;
+            box-sizing: border-box;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        input, select, button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .btn-add {
+            background-color: #008CBA;
+        }
+        .btn-add:hover {
+            background-color: #007399;
+        }
+        .hint {
+            width: 100%;
+            font-size: 14px;
+            color: #d9534f;
+            font-weight: bold;
+            margin-top: -5px;
+        }
+        /* 記錄表主體區塊 */
+        #export-area {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 900px;
+            box-sizing: border-box;
+        }
+        .record-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            font-size: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        /* 圖表區域外框 */
+        .chart-wrapper {
+            position: relative;
+            width: 800px;
+            height: 540px;
+            margin: 0 auto 50px 50px;
+        }
+        
+        /* 圖表區塊設定 */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+            border-left: 2px solid white;
+            border-bottom: 2px solid white;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        /* 網格線 */
+        .grid-line-x, .grid-line-y {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .grid-line-x { width: 1px; height: 100%; }
+        .grid-line-y { width: 100%; height: 1px; }
+        
+        /* 縱軸標籤 */
+        #y-axis-labels {
+            position: absolute;
+            left: -45px;
+            top: 0;
+            width: 40px;
+            height: 100%;
+        }
+        .y-label {
+            position: absolute;
+            width: 100%;
+            text-align: right;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            transform: translateY(-50%);
+        }
+
+        /* 橫軸標籤 */
+        #x-axis-labels {
+            position: absolute;
+            bottom: -35px;
+            left: 0;
+            width: 100%;
+            height: 30px;
+        }
+        .x-label {
+            position: absolute;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            transform: translateX(-50%);
+        }
+
+        /* 背景地景 */
+        .landscape {
+            position: absolute;
+            bottom: -5px;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            font-size: 45px;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* 可拖曳的月亮 */
+        .moon {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 35px;
+            line-height: 40px;
+            text-align: center;
+            cursor: grab;
+            transform: translate(-50%, -50%);
+            user-select: none;
+            z-index: 10;
+            text-shadow: 0 0 15px rgba(255,255,255,0.8);
+        }
+        .moon:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 控制面板 -->
+    <div class="controls">
+        <div class="input-group">
+            <label>日期:</label>
+            <input type="date" id="dateInput" onchange="updateInfo()">
+        </div>
+        <div class="input-group">
+            <label>時間:</label>
+            <input type="time" id="timeInput" onchange="updateInfo()">
+        </div>
+        <div class="input-group">
+            <label>地點:</label>
+            <input type="text" id="locInput" placeholder="例如: 學校操場" onchange="updateInfo()" onkeyup="updateInfo()">
+        </div>
+        <div class="input-group">
+            <label>記錄者:</label>
+            <input type="text" id="nameInput" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
+        </div>
+        <div class="input-group" style="margin-left: auto;">
+            <select id="phaseSelect">
+                <option value="🌕">🌕 滿月 (望)</option>
+                <option value="🌖">🌖 虧凸月</option>
+                <option value="🌗">🌗 下弦月</option>
+                <option value="🌘">🌘 殘月</option>
+                <option value="🌑">🌑 新月 (朔)</option>
+                <option value="🌒">🌒 眉月</option>
+                <option value="🌓">🌓 上弦月</option>
+                <option value="🌔">🌔 盈凸月</option>
+            </select>
+            <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
+        </div>
+        <button onclick="exportToImage()">📥 匯出成圖檔</button>
+        <div class="hint">💡 提示：月亮可隨意拖曳至記錄表中任何位置；對著月亮「點擊兩下 (雙擊)」可將其刪除。</div>
+    </div>
+
+    <!-- 匯出畫布區 -->
+    <div id="export-area">
+        <h2>月亮高度角與方位角觀測記錄</h2>
+        <div class="record-info">
+            <span id="dispDate">日期: ____________</span>
+            <span id="dispTime">時間: ____________</span>
+            <span id="dispLoc">地點: ____________</span>
+            <span id="dispName">記錄者: ____________</span>
+        </div>
+        
+        <div class="chart-wrapper">
+            <div id="y-axis-labels"></div>
+            <div class="chart-container" id="chart">
+                <div class="landscape">
+                    <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
+                </div>
+                <!-- 預設月亮 -->
+                <div class="moon" style="left: 0px; top: 540px;">🌕</div>
+            </div>
+            <div id="x-axis-labels"></div>
+        </div>
+    </div>
+
+    <script>
+        const chartWidth = 800;
+        const chartHeight = 540;
+        const xSteps = 4; 
+        const ySteps = 18; 
+        
+        const xStepSize = chartWidth / xSteps; 
+        const yStepSize = chartHeight / ySteps; 
+
+        const directions = ['東', '東南', '南', '西南', '西'];
+
+        function initGrid() {
+            const chart = document.getElementById('chart');
+            const yLabels = document.getElementById('y-axis-labels');
+            const xLabels = document.getElementById('x-axis-labels');
+
+            // 產生Y軸 (高度角 0-90度)
+            for (let i = 0; i <= ySteps; i++) {
+                let degree = i * 5;
+                let topPos = chartHeight - (i * yStepSize);
+
+                if (i > 0 && i < ySteps) {
+                    let line = document.createElement('div');
+                    line.className = 'grid-line-y';
+                    line.style.top = topPos + 'px';
+                    chart.appendChild(line);
+                }
+
+                let label = document.createElement('div');
+                label.className = 'y-label';
+                label.style.top = topPos + 'px';
+                label.innerText = degree + '°';
+                yLabels.appendChild(label);
+            }
+
+            // 產生X軸 (方位角)
+            for (let i = 0; i <= xSteps; i++) {
+                let leftPos = i * xStepSize;
+
+                if (i > 0 && i < xSteps) {
+                    let line = document.createElement('div');
+                    line.className = 'grid-line-x';
+                    line.style.left = leftPos + 'px';
+                    chart.appendChild(line);
+                }
+
+                let label = document.createElement('div');
+                label.className = 'x-label';
+                label.style.left = leftPos + 'px';
+                label.innerText = directions[i];
+                xLabels.appendChild(label);
+            }
+        }
+
+        function updateInfo() {
+            document.getElementById('dispDate').innerText = '日期: ' + (document.getElementById('dateInput').value || '____________');
+            document.getElementById('dispTime').innerText = '時間: ' + (document.getElementById('timeInput').value || '____________');
+            document.getElementById('dispLoc').innerText = '地點: ' + (document.getElementById('locInput').value || '____________');
+            document.getElementById('dispName').innerText = '記錄者: ' + (document.getElementById('nameInput').value || '____________');
+        }
+
+        function addMoon() {
+            const phase = document.getElementById('phaseSelect').value;
+            const chart = document.getElementById('chart');
+            const newMoon = document.createElement('div');
+            newMoon.className = 'moon';
+            newMoon.innerText = phase;
+            newMoon.style.left = '0px';
+            newMoon.style.top = '540px';
+            chart.appendChild(newMoon);
+        }
+
+        // 自由拖曳邏輯 (取消網格吸附)
+        const chart = document.getElementById('chart');
+        let activeMoon = null;
+        let isDragging = false;
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('moon')) {
+                isDragging = true;
+                activeMoon = e.target;
+                e.preventDefault(); 
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || !activeMoon) return;
+            const rect = chart.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+
+            // 限制月亮不超出圖表範圍
+            x = Math.max(0, Math.min(x, chartWidth));
+            y = Math.max(0, Math.min(y, chartHeight));
+
+            activeMoon.style.left = x + 'px';
+            activeMoon.style.top = y + 'px';
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging && activeMoon) {
+                // 放開滑鼠時直接停留在當前位置，不進行網格對齊
+                isDragging = false;
+                activeMoon = null;
+            }
+        });
+
+        // 雙擊刪除
+        document.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('moon')) {
+                e.target.remove();
+            }
+        });
+
+        function exportToImage() {
+            const captureArea = document.getElementById('export-area');
+            const btn = document.querySelector('button[onclick="exportToImage()"]');
+            const originalText = btn.innerText;
+            btn.innerText = '處理中...';
+
+            html2canvas(captureArea, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '月亮觀測軌跡_' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerText = originalText;
+            }).catch(err => {
+                alert('匯出失敗，請再試一次。');
+                btn.innerText = originalText;
+            });
+        }
+
+        window.onload = () => {
+            initGrid();
+        };
+    </script>
+</body>
+</html>
