@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>互動式月相與月出沒查詢系統 (真實天文數據版)</title>
+  <!-- 引入開源天文學計算庫 SunCalc -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #151c2e;
+      --accent-color: #38bdf8;
+      --moon-color: #fef08a; /* 月亮黃 */
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #2a364f;
+      --highlight-border: #38bdf8;
+      --daytime-bg: #ffffff;
+      --daytime-text: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "PingFang TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 上方區塊 */
+    .top-section {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .top-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    /* 左上：向量月相示意圖視窗 */
+    .moon-window {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 250px;
+    }
+
+    .moon-diagram-frame {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: #000;
+      box-shadow: 0 0 25px rgba(254, 240, 138, 0.25);
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .moon-label {
+      margin-top: 14px;
+      font-weight: bold;
+      font-size: 1.05rem;
+      color: var(--moon-color);
+      text-shadow: 0 0 8px rgba(254, 240, 138, 0.3);
+    }
+
+    /* 右上：當日數據與模擬夜空 */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .time-row {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .time-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .info-label {
+      color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+
+    .info-value {
+      font-weight: bold;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    /* 模擬觀測夜空區塊 */
+    .sky-sim-box {
+      background: #080d1a;
+      border: 1px solid #1e2942;
+      border-radius: 12px;
+      padding: 14px 16px;
+      user-select: none;
+      margin-top: 4px;
+    }
+
+    .sky-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sky-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sky-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sky-play-btn {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .sky-play-btn:hover {
+      background: var(--accent-color);
+      color: #0b0f19;
+    }
+
+    .sky-play-btn.playing {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border-color: #f87171;
+    }
+
+    .sky-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sky-stage {
+      position: relative;
+      height: 190px;
+      width: 100%;
+      border-bottom: 2px solid #334155;
+      overflow: hidden;
+      touch-action: none;
+      cursor: crosshair;
+      background: radial-gradient(ellipse at bottom, #111a2e 0%, #060913 100%);
+      border-radius: 6px;
+    }
+
+    /* 背景星空裝飾微點 */
+    .sky-stage::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 100px 80px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 220px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.2px 1.2px at 320px 120px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 420px 60px, #ffffff, rgba(0,0,0,0));
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Y 軸高度角網格線與標籤 */
+    .sky-grid-y {
+      position: absolute;
+      left: 36px;
+      right: 12px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+      pointer-events: none;
+    }
+
+    .sky-label-y {
+      position: absolute;
+      left: 6px;
+      font-size: 0.75rem;
+      color: #64748b;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    /* X 軸方位角垂直網格線 */
+    .sky-grid-x {
+      position: absolute;
+      top: 8px;
+      bottom: 0;
+      border-left: 1px dashed rgba(255, 255, 255, 0.12);
+      pointer-events: none;
+    }
+
+    /* X 軸刻度標籤 */
+    .sky-labels-x {
+      display: flex;
+      justify-content: space-between;
+      padding-left: 36px;
+      padding-right: 12px;
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #94a3b8;
+    }
+
+    .sky-labels-x span {
+      font-weight: 500;
+    }
+
+    .sky-labels-x span.main-dir {
+      font-weight: bold;
+      color: #f8fafc;
+    }
+
+    /* 可拖曳月亮節點 */
+    .sky-moon-node {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      transform: translate(-50%, -50%);
+      cursor: grab;
+      z-index: 20;
+      filter: drop-shadow(0 0 12px rgba(254, 240, 138, 0.75));
+    }
+
+    .sky-moon-node:active {
+      cursor: grabbing;
+    }
+
+    .sky-footer-tip {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    /* 下方：橫向月曆表格 */
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--card-bg);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+    }
+
+    table {
+      border-collapse: collapse;
+      white-space: nowrap;
+      width: 100%;
+      text-align: center;
+    }
+
+    th, td {
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      font-size: 0.92rem;
+    }
+    
+    /* 表頭固定列 */
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #1a233a !important;
+      color: var(--accent-color) !important;
+      z-index: 10;
+      font-weight: bold;
+      border-right: 2px solid var(--border-color);
+    }
+
+    /* 白天醒目背景樣式 */
+    .daytime-cell {
+      background-color: var(--daytime-bg) !important;
+      color: var(--daytime-text) !important;
+    }
+
+    /* 被選取的欄位高亮 */
+    .col-selected {
+      outline: 2px solid var(--highlight-border);
+      outline-offset: -2px;
+      font-weight: bold;
+    }
+
+    .clickable-col {
+      cursor: pointer;
+      transition: background 0.15s ease-in-out;
+    }
+
+    .clickable-col:hover {
+      opacity: 0.85;
+      background-color: rgba(56, 189, 248, 0.1);
+    }
+
+    .moon-svg-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-section">
+    <!-- 左上：向量月相示意圖視窗 -->
+    <div class="card">
+      <div class="card-title">月相視窗 (真實天文精算)</div>
+      <div class="moon-window">
+        <div class="moon-diagram-frame">
+          <svg id="main-moon-svg" width="170" height="170" viewBox="0 0 170 170">
+            <defs>
+              <!-- 暖黃光澤月亮色漸層 -->
+              <radialGradient id="moon-light-grad" cx="40%" cy="40%" r="65%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="45%" stop-color="#fef08a"/>
+                <stop offset="85%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </radialGradient>
+            </defs>
+            <!-- 暗面背景圓（月球陰影面） -->
+            <circle cx="85" cy="85" r="80" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <!-- 亮面區域（月亮色填滿） -->
+            <path id="main-moon-bright-path" fill="url(#moon-light-grad)" d="" />
+            <!-- 外圈月光微暈輪廓 -->
+            <circle cx="85" cy="85" r="80" fill="none" stroke="#fef08a" stroke-width="1.5" opacity="0.5"/>
+          </svg>
+        </div>
+        <div id="moon-phase-title" class="moon-label">載入中...</div>
+      </div>
+    </div>
+
+    <!-- 右上：當日數據與可拖曳模擬觀測夜空 -->
+    <div class="card">
+      <div id="current-date-header" class="card-title">當日數據</div>
+      <div class="info-list">
+        <!-- 月出沒時刻 -->
+        <div class="time-row">
+          <div class="time-item"><span class="info-label">月出時間：</span><span id="val-moonrise" class="info-value">--:--</span></div>
+          <div class="time-item"><span class="info-label">月至中天時間：</span><span id="val-transit" class="info-value">--:--</span></div>
+          <div class="time-item"><span class="info-label">月沒時間：</span><span id="val-moonset" class="info-value">--:--</span></div>
+        </div>
+
+        <!-- 模擬觀測夜空視窗 -->
+        <div class="sky-sim-box">
+          <div class="sky-header">
+            <div class="sky-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
+              模擬觀測夜空
+            </div>
+            <div class="sky-controls">
+              <!-- 新增：自動播放軌跡按鈕 -->
+              <button id="btn-play-sky" class="sky-play-btn">▶ 自動軌跡移動</button>
+              <span class="sky-badge">面朝正南方觀察</span>
+            </div>
+          </div>
+
+          <!-- 主舞台畫布區 -->
+          <div id="sky-stage" class="sky-stage">
+            <!-- Y 軸高度角刻度與水平虛線 -->
+            <span class="sky-label-y" style="top: 10%;">90°</span><div class="sky-grid-y" style="top: 10%;"></div>
+            <span class="sky-label-y" style="top: 26%;">75°</span><div class="sky-grid-y" style="top: 26%;"></div>
+            <span class="sky-label-y" style="top: 42%;">60°</span><div class="sky-grid-y" style="top: 42%;"></div>
+            <span class="sky-label-y" style="top: 58%;">45°</span><div class="sky-grid-y" style="top: 58%;"></div>
+            <span class="sky-label-y" style="top: 74%;">30°</span><div class="sky-grid-y" style="top: 74%;"></div>
+            <span class="sky-label-y" style="top: 90%;">15°</span><div class="sky-grid-y" style="top: 90%;"></div>
+
+            <!-- X 軸方位角垂直虛線 -->
+            <div class="sky-grid-x" style="left: 36px;"></div>
+            <div class="sky-grid-x" style="left: calc(36px + (100% - 48px) * 0.25);"></div>
+            <div class="sky-grid-x" style="left: calc(36px + (100% - 48px) * 0.5);"></div>
+            <div class="sky-grid-x" style="left: calc(36px + (100% - 48px) * 0.75);"></div>
+            <div class="sky-grid-x" style="right: 12px;"></div>
+
+            <!-- 可拖曳與自動移動月亮節點 -->
+            <div id="sky-moon-node" class="sky-moon-node" style="left: 36px; top: 88%;">
+              <!-- SVG 月相會由 JS 動態填入 -->
+            </div>
+          </div>
+
+          <!-- X 軸方位角標籤 -->
+          <div class="sky-labels-x">
+            <span class="main-dir">東 (90°)</span>
+            <span>東南</span>
+            <span class="main-dir">正南 (180°)</span>
+            <span>西南</span>
+            <span class="main-dir">西 (270°)</span>
+          </div>
+
+          <div class="sky-footer-tip">
+            💡 點擊「自動軌跡移動」按鈕可模擬月亮高度角演變；亦可直接用滑鼠拖曳月亮。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 下方橫向表格 -->
+  <div class="table-container">
+    <table id="moon-table">
+      <thead>
+        <tr id="row-lunar"><th style="min-width:110px;">農曆</th></tr>
+      </thead>
+      <tbody>
+        <tr id="row-solar"><td>國曆</td></tr>
+        <tr id="row-rise"><td>月出時間</td></tr>
+        <tr id="row-set"><td>月沒時間</td></tr>
+        <tr id="row-phase"><td>月相縮圖</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // 台灣屏東市經緯度
+  const LAT = 22.67;
+  const LNG = 120.48;
+
+  // 農曆日期名稱對照表
+  const lunarNames = ["", "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", 
+                      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十", 
+                      "二十一", "二十二", "二十三", "二十四", "二十五", "二十六", "二十七", "二十八", "二十九", "三十"];
+
+  // 時間格式化 HH:mm
+  function formatTime(dateObj) {
+    if (!dateObj || isNaN(dateObj.getTime())) return "--:--";
+    return `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  // 判斷時間是否在白天 (06:00 - 17:59)
+  function isDaytime(timeStr) {
+    if (!timeStr || timeStr === "--:--") return false;
+    const hour = parseInt(timeStr.split(':')[0], 10);
+    return hour >= 6 && hour < 18;
+  }
+
+  // 根據天文 Phase (0.0 ~ 1.0) 取得中文月相名稱
+  function getPhaseText(phase) {
+    if (phase < 0.03 || phase > 0.97) return "新月 (朔)";
+    if (phase < 0.22) return "眉月";
+    if (phase < 0.28) return "上弦月";
+    if (phase < 0.47) return "盈凸月";
+    if (phase < 0.53) return "滿月 (望)";
+    if (phase < 0.72) return "虧凸月";
+    if (phase < 0.78) return "下弦月";
+    return "殘月";
+  }
+
+  // 使用原生 Intl 自動獲取農曆月份與日期名稱
+  function getLunarInfo(date) {
+    try {
+      const formatter = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { month: 'long', day: 'numeric' });
+      const parts = formatter.formatToParts(date);
+      let monthStr = "";
+      let dayNum = 1;
+      for (const part of parts) {
+        if (part.type === 'month') monthStr = part.value;
+        if (part.type === 'day') dayNum = parseInt(part.value, 10);
+      }
+      return {
+        lunarMonthStr: monthStr,
+        lunarDayStr: lunarNames[dayNum] || `${dayNum}`
+      };
+    } catch (e) {
+      return { lunarMonthStr: "", lunarDayStr: "" };
+    }
+  }
+
+  // 繪製向量 SVG 月相圖案 (供表格、模擬夜空使用)
+  function generateMoonSVGContent(phase, r = 12, size = 28) {
+    const cx = size / 2;
+    const cy = size / 2;
+    const fillLight = '#fef08a';
+    const fillDark = '#1e293b';
+    const strokeColor = '#64748b';
+    const strokeWidth = 1.2;
+
+    const phaseAngle = phase * 2 * Math.PI;
+    const cosVal = Math.cos(phaseAngle);
+    const rx = Math.max(0.01, Math.abs(r * cosVal)).toFixed(2); 
+
+    let path = "";
+    if (phase > 0.015 && phase < 0.985) { 
+      if (phase <= 0.5) { 
+        // 漸盈期 (右側亮)
+        const sweepInner = cosVal > 0 ? 0 : 1;
+        path = `M ${cx},${cy - r} A ${r},${r} 0 0,1 ${cx},${cy + r} A ${rx},${r} 0 0,${sweepInner} ${cx},${cy - r}`;
+      } else { 
+        // 漸虧期 (左側亮)
+        const sweepInner = cosVal < 0 ? 0 : 1;
+        path = `M ${cx},${cy - r} A ${r},${r} 0 0,0 ${cx},${cy + r} A ${rx},${r} 0 0,${sweepInner} ${cx},${cy - r}`;
+      }
+    } else if (Math.abs(phase - 0.5) < 0.015) {
+      // 滿月
+      path = `M ${cx},${cy - r} A ${r},${r} 0 1,1 ${cx},${cy + r} A ${r},${r} 0 1,1 ${cx},${cy - r}`;
+    }
+
+    return `<div class="moon-svg-cell">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="${fillDark}"/>
+        ${path ? `<path d="${path}" fill="${fillLight}"/>` : ''}
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>
+      </svg>
+    </div>`;
+  }
+
+  // 動態渲染左上角 170x170 大尺寸向量月亮示意圖
+  function updateMainMoonDiagram(phase) {
+    const pathElem = document.getElementById('main-moon-bright-path');
+    const R = 80;
+    const cx = 85;
+    const cy = 85;
+
+    const phaseAngle = phase * 2 * Math.PI;
+    const cosVal = Math.cos(phaseAngle);
+    const rx = Math.max(0.01, Math.abs(R * cosVal)).toFixed(2);
+
+    let d = "";
+    if (phase < 0.015 || phase > 0.985) {
+      d = ""; // 新月 (全暗)
+    } else if (Math.abs(phase - 0.5) < 0.015) {
+      d = `M ${cx},${cy - R} A ${R},${R} 0 1,1 ${cx},${cy + R} A ${R},${R} 0 1,1 ${cx},${cy - R}`; // 滿月 (全亮)
+    } else {
+      if (phase <= 0.5) { 
+        // 漸盈期：光亮在右側
+        const sweepInner = cosVal > 0 ? 0 : 1;
+        d = `M ${cx},${cy - R} A ${R},${R} 0 0,1 ${cx},${cy + R} A ${rx},${R} 0 0,${sweepInner} ${cx},${cy - R}`;
+      } else { 
+        // 漸虧期：光亮在左側
+        const sweepInner = cosVal < 0 ? 0 : 1;
+        d = `M ${cx},${cy - R} A ${R},${R} 0 0,0 ${cx},${cy + R} A ${rx},${R} 0 0,${sweepInner} ${cx},${cy - R}`;
+      }
+    }
+
+    pathElem.setAttribute('d', d);
+  }
+
+  // 載入 2026/08/13 直到 2026/12/31 數據
+  const cwaDataStore = [];
+  const startDate = new Date(2026, 7, 13, 12, 0, 0);  // 2026/08/13
+  const endDate = new Date(2026, 11, 31, 12, 0, 0);   // 2026/12/31
+
+  let curr = new Date(startDate);
+  while (curr <= endDate) {
+    const month = curr.getMonth() + 1;
+    const date = curr.getDate();
+    
+    const lunarInfo = getLunarInfo(curr);
+    const moonTimes = SunCalc.getMoonTimes(curr, LAT, LNG);
+    const moonIllum = SunCalc.getMoonIllumination(curr);
+    
+    const riseStr = formatTime(moonTimes.rise);
+    const setStr = formatTime(moonTimes.set);
+    
+    let transitStr = "--:--";
+    if (moonTimes.highest) {
+      transitStr = formatTime(moonTimes.highest);
+    } else if (moonTimes.rise && moonTimes.set) {
+      const riseTime = moonTimes.rise.getTime();
+      let setTime = moonTimes.set.getTime();
+      if (setTime < riseTime) setTime += 24 * 3600 * 1000;
+      transitStr = formatTime(new Date((riseTime + setTime) / 2));
+    }
+
+    cwaDataStore.push({
+      lunarMonthStr: lunarInfo.lunarMonthStr,
+      lunar: lunarInfo.lunarDayStr,
+      solarYearStr: "2026年",
+      solar: `${month}/${date}`,
+      rise: riseStr,
+      transit: transitStr,
+      set: setStr,
+      isRiseDay: isDaytime(riseStr),
+      isSetDay: isDaytime(setStr),
+      phaseValue: moonIllum.phase,
+      phaseName: getPhaseText(moonIllum.phase)
+    });
+
+    curr.setDate(curr.getDate() + 1);
+  }
+
+  // 渲染橫向表格
+  function renderTable() {
+    const rLunar = document.getElementById('row-lunar');
+    const rSolar = document.getElementById('row-solar');
+    const rRise = document.getElementById('row-rise');
+    const rSet = document.getElementById('row-set');
+    const rPhase = document.getElementById('row-phase');
+
+    cwaDataStore.forEach((d, idx) => {
+      const riseBgClass = d.isRiseDay ? 'daytime-cell' : '';
+      const setBgClass = d.isSetDay ? 'daytime-cell' : '';
+
+      rLunar.innerHTML += `<th class="clickable-col col-${idx}" onclick="selectDate(${idx})">${d.lunar}</th>`;
+      rSolar.innerHTML += `<td class="clickable-col col-${idx}" onclick="selectDate(${idx})">${d.solar}</td>`;
+      rRise.innerHTML += `<td class="clickable-col col-${idx} ${riseBgClass}" onclick="selectDate(${idx})">${d.rise}</td>`;
+      rSet.innerHTML += `<td class="clickable-col col-${idx} ${setBgClass}" onclick="selectDate(${idx})">${d.set}</td>`;
+      rPhase.innerHTML += `<td class="clickable-col col-${idx}" onclick="selectDate(${idx})">${generateMoonSVGContent(d.phaseValue)}</td>`;
+    });
+  }
+
+  // 點擊日期觸發資料更新
+  function selectDate(idx) {
+    const data = cwaDataStore[idx];
+
+    // 清除既有高亮並設定目前欄位高亮
+    document.querySelectorAll('.clickable-col').forEach(el => el.classList.remove('col-selected'));
+    const selectedEls = document.querySelectorAll(`.col-${idx}`);
+    selectedEls.forEach(el => el.classList.add('col-selected'));
+
+    // 自動捲動讓點選的日期呈現在視窗中央
+    if (selectedEls[0]) {
+      selectedEls[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+
+    // 更新右上方數據卡片標頭與時間
+    document.getElementById('current-date-header').textContent = `當日數據（農曆${data.lunarMonthStr}${data.lunar} / 國曆 ${data.solarYearStr}${data.solar}）`;
+    document.getElementById('val-moonrise').textContent = data.rise;
+    document.getElementById('val-transit').textContent = data.transit;
+    document.getElementById('val-moonset').textContent = data.set;
+
+    // 更新左上方月相名稱與亮面 SVG
+    document.getElementById('moon-phase-title').textContent = `農曆${data.lunarMonthStr}${data.lunar}・${data.phaseName}`;
+    updateMainMoonDiagram(data.phaseValue);
+
+    // 同步更新模擬夜空畫布中的月相
+    const skyMoonNode = document.getElementById('sky-moon-node');
+    skyMoonNode.innerHTML = generateMoonSVGContent(data.phaseValue, 18, 42);
+  }
+
+  // ---- 模擬夜空互動拖曳與自動播放高度角機制 ----
+  const skyStage = document.getElementById('sky-stage');
+  const skyMoonNode = document.getElementById('sky-moon-node');
+  const btnPlaySky = document.getElementById('btn-play-sky');
+
+  let isDraggingSkyMoon = false;
+  let isAnimatingSky = false;
+  let skyAnimReqId = null;
+  let animProgress = 0; // 0.0 ~ 1.0
+
+  // 拖曳處理 logic
+  function handleSkyPointerMove(e) {
+    const rect = skyStage.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    x = Math.max(18, Math.min(rect.width - 18, x));
+    y = Math.max(18, Math.min(rect.height - 18, y));
+
+    skyMoonNode.style.left = `${x}px`;
+    skyMoonNode.style.top = `${y}px`;
+  }
+
+  skyStage.addEventListener('pointerdown', (e) => {
+    stopSkyAnimation(); // 人工接管拖曳時立即停止自動動畫
+    isDraggingSkyMoon = true;
+    skyStage.setPointerCapture(e.pointerId);
+    handleSkyPointerMove(e);
+  });
+
+  skyStage.addEventListener('pointermove', (e) => {
+    if (isDraggingSkyMoon) {
+      handleSkyPointerMove(e);
+    }
+  });
+
+  skyStage.addEventListener('pointerup', (e) => {
+    if (isDraggingSkyMoon) {
+      isDraggingSkyMoon = false;
+      skyStage.releasePointerCapture(e.pointerId);
+    }
+  });
+
+  // 自動沿拋物線軌跡移動月亮高度角與方位角
+  function animateSkyMoonStep() {
+    if (!isAnimatingSky) return;
+
+    animProgress += 0.006; // 移動速度
+    if (animProgress > 1.0) {
+      animProgress = 0.0;
+    }
+
+    const rect = skyStage.getBoundingClientRect();
+    const startX = 36;
+    const endX = rect.width - 18;
+    const rangeX = endX - startX;
+
+    // 方位角 X 軸：從東(左)延伸到西(右)
+    const currentX = startX + rangeX * animProgress;
+
+    // 高度角 Y 軸：拋物線弧形（兩側低、中央正南方高）
+    const midX = startX + rangeX / 2;
+    const peakY = 28; // 高度角頂點 (~75°~90° 位置)
+    const minY = rect.height - 24; // 高度角底點 (~15° 位置)
+    const normDist = (currentX - midX) / (rangeX / 2);
+    const currentY = peakY + (minY - peakY) * (normDist * normDist);
+
+    skyMoonNode.style.left = `${currentX}px`;
+    skyMoonNode.style.top = `${currentY}px`;
+
+    skyAnimReqId = requestAnimationFrame(animateSkyMoonStep);
+  }
+
+  function toggleSkyAnimation() {
+    if (isAnimatingSky) {
+      stopSkyAnimation();
+    } else {
+      isAnimatingSky = true;
+      btnPlaySky.textContent = "⏸ 停止移動";
+      btnPlaySky.classList.add('playing');
+      skyAnimReqId = requestAnimationFrame(animateSkyMoonStep);
+    }
+  }
+
+  function stopSkyAnimation() {
+    isAnimatingSky = false;
+    if (skyAnimReqId) {
+      cancelAnimationFrame(skyAnimReqId);
+      skyAnimReqId = null;
+    }
+    btnPlaySky.textContent = "▶ 自動軌跡移動";
+    btnPlaySky.classList.remove('playing');
+  }
+
+  btnPlaySky.addEventListener('click', toggleSkyAnimation);
+
+  // 初始化執行
+  renderTable();
+  // 預設選取起始日期（國曆 8/13 農曆七月初一）
+  selectDate(0); 
+</script>
+
+</body>
+</html>
