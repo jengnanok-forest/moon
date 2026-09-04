@@ -7,7 +7,7 @@
     <!-- 引入 Tailwind CSS 美化介面 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /*  Twinkle background stars effect */
+        /* Twinkle background stars effect */
         .star {
             animation: twinkle 3s infinite ease-in-out;
         }
@@ -17,23 +17,52 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col relative overflow-x-hidden select-none">
 
-    <!-- 頂部導航欄 -->
-    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 shadow-md">
+    <!-- 全螢幕手繪註記畫布 (z-40，預設 pointer-events-none 不擋住底下點擊) -->
+    <canvas id="drawing-canvas" class="fixed inset-0 z-40 pointer-events-none w-full h-full"></canvas>
+
+    <!-- 頂部導航欄 (z-50 確保控制區永遠可正常點擊) -->
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 shadow-md relative z-50">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
+            
+            <!-- 標題與螢幕畫筆註記工具列 -->
+            <div class="flex items-center gap-3 flex-wrap">
                 <span class="text-3xl">🌙</span>
                 <div>
                     <h1 class="text-xl font-bold bg-gradient-to-r from-amber-200 to-indigo-400 bg-clip-text text-transparent">月亮觀測與月相變化互動學習網</h1>
                     <p class="text-xs text-slate-400">專為國小地科設計：可拖曳月亮高度角、方位與動態記錄工具</p>
                 </div>
+
+                <!-- 螢幕手繪註記工具列 -->
+                <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 ml-0 lg:ml-4 shadow-inner">
+                    <button id="draw-toggle-btn" onclick="toggleDrawingMode()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all flex items-center gap-1.5 border border-slate-700 cursor-pointer">
+                        <span>✏️ 螢幕畫筆</span>
+                        <span id="draw-status-tag" class="text-[10px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded">關閉</span>
+                    </button>
+                    
+                    <!-- 多色選擇 -->
+                    <div class="flex items-center gap-1 px-1 border-l border-slate-800">
+                        <button onclick="setDrawColor('#f87171')" class="color-btn w-5 h-5 rounded-full bg-red-400 border-2 border-white transition-all transform hover:scale-110 cursor-pointer" data-color="#f87171" title="紅色"></button>
+                        <button onclick="setDrawColor('#facc15')" class="color-btn w-5 h-5 rounded-full bg-yellow-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#facc15" title="黃色"></button>
+                        <button onclick="setDrawColor('#4ade80')" class="color-btn w-5 h-5 rounded-full bg-green-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#4ade80" title="綠色"></button>
+                        <button onclick="setDrawColor('#38bdf8')" class="color-btn w-5 h-5 rounded-full bg-sky-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#38bdf8" title="藍色"></button>
+                        <button onclick="setDrawColor('#ffffff')" class="color-btn w-5 h-5 rounded-full bg-white border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#ffffff" title="白色"></button>
+                    </div>
+                    
+                    <!-- 清除畫布 -->
+                    <button onclick="clearCanvas()" class="px-2 py-1.5 rounded-lg text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-900/50 transition-all cursor-pointer" title="清除所有註記">
+                        🗑️ 清除
+                    </button>
+                </div>
             </div>
+
+            <!-- 動態播放控制鈕 -->
             <div class="flex gap-2">
-                <button onclick="simulateDayMovement()" id="play-day-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-indigo-900/30">
+                <button onclick="simulateDayMovement()" id="play-day-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-indigo-900/30 cursor-pointer">
                     <span>🎬 模擬一天移動</span>
                 </button>
-                <button onclick="togglePhaseAnimation()" id="play-phase-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/30">
+                <button onclick="togglePhaseAnimation()" id="play-phase-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/30 cursor-pointer">
                     <span id="play-phase-text">🔄 播放月相盈虧</span>
                 </button>
             </div>
@@ -41,9 +70,9 @@
     </header>
 
     <!-- 主要內容區 -->
-    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow w-full">
+    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow w-full relative z-10">
         
-        <!-- 左側：天文觀測模擬星空 (8 欄) -->
+        <!-- 左側：天文觀測模擬星空 (7 欄) -->
         <div class="lg:col-span-7 flex flex-col gap-4">
             <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full">
                 <div class="flex justify-between items-center mb-3">
@@ -58,7 +87,6 @@
                     
                     <!-- 隨機背景星星 -->
                     <svg class="absolute inset-0 w-full h-full opacity-60 pointer-events-none">
-                        <!-- Twinkling stars -->
                         <circle cx="50" cy="40" r="1" fill="#fff" class="star" style="animation-delay: 0.2s" />
                         <circle cx="120" cy="80" r="1.5" fill="#fff" class="star" style="animation-delay: 1.5s" />
                         <circle cx="180" cy="30" r="1" fill="#fff" class="star" style="animation-delay: 0.8s" />
@@ -71,7 +99,6 @@
                     <!-- 高度角與方位角 坐標軸線 (SVG) -->
                     <svg id="sky-grid" class="absolute inset-0 w-full h-full pointer-events-none select-none" viewBox="0 0 500 300" preserveAspectRatio="none">
                         <defs>
-                            <!-- 月亮發光濾鏡 -->
                             <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
                                 <feGaussianBlur stdDeviation="8" result="blur" />
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
@@ -79,31 +106,27 @@
                         </defs>
 
                         <!-- 高度角橫線 (0° ~ 90°) -->
-                        <!-- 15° -->
                         <line x1="40" y1="223" x2="460" y2="223" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="227" fill="#64748b" font-size="10" font-weight="bold">15°</text>
-                        <!-- 30° -->
+                        
                         <line x1="40" y1="187" x2="460" y2="187" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="191" fill="#64748b" font-size="10" font-weight="bold">30°</text>
-                        <!-- 45° -->
+                        
                         <line x1="40" y1="150" x2="460" y2="150" stroke="#475569" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="154" fill="#94a3b8" font-size="10" font-weight="bold">45°</text>
-                        <!-- 60° -->
+                        
                         <line x1="40" y1="113" x2="460" y2="113" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="117" fill="#64748b" font-size="10" font-weight="bold">60°</text>
-                        <!-- 75° -->
+                        
                         <line x1="40" y1="77" x2="460" y2="77" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="81" fill="#64748b" font-size="10" font-weight="bold">75°</text>
-                        <!-- 90° (頂點) -->
+                        
                         <line x1="40" y1="40" x2="460" y2="40" stroke="#475569" stroke-dasharray="4 4" stroke-width="1" />
                         <text x="18" y="44" fill="#94a3b8" font-size="10" font-weight="bold">90°</text>
 
                         <!-- 方位角直線 -->
-                        <!-- 東南 (135°) -->
                         <line x1="145" y1="40" x2="145" y2="260" stroke="#334155" stroke-dasharray="4 4" />
-                        <!-- 正南 (180°) -->
                         <line x1="250" y1="40" x2="250" y2="260" stroke="#475569" stroke-dasharray="4 4" stroke-width="1.2" />
-                        <!-- 西南 (225°) -->
                         <line x1="355" y1="40" x2="355" y2="260" stroke="#334155" stroke-dasharray="4 4" />
 
                         <!-- 方位地平標籤 -->
@@ -116,12 +139,9 @@
                         <text x="460" y="282" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">西 (270°)</text>
 
                         <!-- 動態月亮組（將由 JS 控制 translate） -->
-                        <g id="moon-group" class="cursor-pointer transition-transform duration-75" filter="url(#glow)">
-                            <!-- 背景陰暗月球 -->
+                        <g id="moon-group" class="cursor-pointer" filter="url(#glow)">
                             <circle cx="0" cy="0" r="16" fill="#1e293b" stroke="#334155" stroke-width="1" />
-                            <!-- 月相亮部 path (藉由動態路徑實現盈虧) -->
                             <path id="moon-lit-path" fill="#fef08a" />
-                            <!-- 滿月時用整顆圓形亮部 -->
                             <circle id="moon-full-circle" cx="0" cy="0" r="16" fill="#fef08a" style="display: none;" />
                         </g>
                     </svg>
@@ -136,7 +156,6 @@
 
         <!-- 右側：控制面板 (5 欄) -->
         <div class="lg:col-span-5 flex flex-col gap-4">
-            <!-- 月相與觀測控制板 -->
             <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between h-full">
                 
                 <!-- 月亮即時數據 -->
@@ -174,14 +193,14 @@
                         
                         <!-- 8個經典月相快捷鈕 -->
                         <div class="grid grid-cols-4 gap-1.5 mb-3">
-                            <button onclick="setMoonPhase(0)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">新月</button>
-                            <button onclick="setMoonPhase(1)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">眉月</button>
-                            <button onclick="setMoonPhase(2)" class="phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white">上弦</button>
-                            <button onclick="setMoonPhase(3)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">盈凸</button>
-                            <button onclick="setMoonPhase(4)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">滿月</button>
-                            <button onclick="setMoonPhase(5)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">虧凸</button>
-                            <button onclick="setMoonPhase(6)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">下弦</button>
-                            <button onclick="setMoonPhase(7)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700">殘月</button>
+                            <button onclick="setMoonPhase(0)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">新月</button>
+                            <button onclick="setMoonPhase(1)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">眉月</button>
+                            <button onclick="setMoonPhase(2)" class="phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white cursor-pointer">上弦</button>
+                            <button onclick="setMoonPhase(3)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">盈凸</button>
+                            <button onclick="setMoonPhase(4)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">滿月</button>
+                            <button onclick="setMoonPhase(5)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">虧凸</button>
+                            <button onclick="setMoonPhase(6)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">下弦</button>
+                            <button onclick="setMoonPhase(7)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">殘月</button>
                         </div>
 
                         <!-- 月相滑桿 (連續) -->
@@ -199,9 +218,9 @@
                 <div class="border-t border-slate-800 pt-4 mt-2 flex flex-col gap-2">
                     <div class="grid grid-cols-1 gap-2">
                         <input type="text" id="obs-notes" placeholder="輸入此筆觀測筆記（例：晚餐後在操場觀測）" 
-                               class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 w-full placeholder-slate-600">
+                               class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 w-full placeholder-slate-600 select-text">
                     </div>
-                    <button onclick="addCurrentRecord()" class="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold text-sm rounded-lg transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5">
+                    <button onclick="addCurrentRecord()" class="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold text-sm rounded-lg transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer">
                         <span>📝 將當前數值加入觀測表</span>
                     </button>
                 </div>
@@ -212,7 +231,7 @@
     </main>
 
     <!-- 下半部：觀測記錄表格 (滿版寬度) -->
-    <section class="max-w-7xl mx-auto p-4 lg:p-6 w-full">
+    <section class="max-w-7xl mx-auto p-4 lg:p-6 w-full relative z-10">
         <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -222,10 +241,10 @@
                     <p class="text-xs text-slate-400 mt-1">可在表格中直接點擊「修改」時間與備註，資料會自動保存至瀏覽器</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg border border-slate-700 transition-all flex items-center gap-1">
+                    <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg border border-slate-700 transition-all flex items-center gap-1 cursor-pointer">
                         📥 匯出 Excel / CSV
                     </button>
-                    <button onclick="clearAllRecords()" class="bg-red-950/40 hover:bg-red-900/40 text-red-400 text-xs px-3 py-2 rounded-lg border border-red-900/50 transition-all">
+                    <button onclick="clearAllRecords()" class="bg-red-950/40 hover:bg-red-900/40 text-red-400 text-xs px-3 py-2 rounded-lg border border-red-900/50 transition-all cursor-pointer">
                         🗑️ 清空表格
                     </button>
                 </div>
@@ -245,7 +264,7 @@
                             <th class="py-3 px-4 w-16 text-center">操作</th>
                         </tr>
                     </thead>
-                    <tbody id="records-tbody" class="text-sm divide-y divide-slate-800/60">
+                    <tbody id="records-tbody" class="text-sm divide-y divide-slate-800/60 select-text">
                         <!-- JS 動態渲染 -->
                     </tbody>
                 </table>
@@ -254,415 +273,568 @@
     </section>
 
     <!-- 底部版權宣告 -->
-    <footer class="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500 mt-auto">
+    <footer class="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500 mt-auto relative z-10">
         <p>© 2026 互動式天文觀測學習教具 · 面向正南方觀測設計</p>
     </footer>
 
     <!-- JavaScript 業務邏輯 -->
     <script>
-        // 1. 初始化狀態與常數
-        let currentAltitude = 45; // 0 ~ 90°
-        let currentAzimuth = 180;  // 90 (東) ~ 270 (西)
-        let currentPhase = 2;      // 0 ~ 7 (對應 8 種月相)
-        let isDragging = false;
-        let phaseInterval = null;
-        let dayInterval = null;
+        // 狀態變數
+        let currentAlt = 45;
+        let currentAz = 180;
+        let currentPhaseIndex = 2;
+        let isPhaseAnimating = false;
+        let phaseAnimInterval = null;
+        let isDaySimulating = false;
 
-        // 月相詳細資料庫
-        const moonPhases = [
-            { name: "新月 (朔)", desc: "農曆初一。此時月亮在太陽與地球之間，亮面背對地球，天空中看不到月亮。", path: "" },
-            { name: "眉月", desc: "農曆初三至初五。黃昏時在西方低空可見，亮面朝右，彎彎像一條修長的眉毛。", path: "M 0 -16 A 16 16 0 0 1 0 16 A 6 16 0 0 0 0 -16 Z" },
-            { name: "上弦月", desc: "農曆初七至初八。亮面在右半邊（西側），黃昏時在正南方最高，約半夜於西方落下。", path: "M 0 -16 A 16 16 0 0 1 0 16 Z" },
-            { name: "盈凸月", desc: "農曆初十至十二。亮面大於一半且偏向右側，大半夜均高掛天空，非常明亮。", path: "M 0 -16 A 16 16 0 0 1 0 16 A 6 16 0 0 1 0 -16 Z" },
-            { name: "滿月 (望)", desc: "農曆十五至十六。月亮亮面呈完整圓形。黃昏時東升，清晨時西落，整夜皆清晰可見。", path: "full" },
-            { name: "虧凸月", desc: "農曆十八至二十。亮面大於一半且偏向左側（東側），多在深夜與清晨時可見。", path: "M 0 -16 A 16 16 0 0 0 0 16 A 6 16 0 0 0 0 -16 Z" },
-            { name: "下弦月", desc: "農曆二十二至二十三。亮面在左半邊（東側）。約半夜東升，清晨時在正南方最高，中午前西落。", path: "M 0 -16 A 16 16 0 0 0 0 16 Z" },
-            { name: "殘月", desc: "農曆二十六至二十八。清晨破曉前在東方低空可見，亮面朝左，彎彎細如眉鉤。", path: "M 0 -16 A 16 16 0 0 0 0 16 A 6 16 0 0 1 0 -16 Z" }
-        ];
+        // 螢幕手繪註記狀態
+        let isDrawingMode = false;
+        let drawColor = '#f87171';
+        let drawLineWidth = 3;
 
-        // 預載觀測範例數據 (同一天的上弦月移動)
+        // 預設觀測紀錄
         let records = [
             {
-                time: getFormattedDateTimeOffset(-4), // 4小時前
-                direction: "東南 (135°)",
-                altitude: 40,
-                phase: "上弦月",
-                notes: "剛吃完晚飯在學校操場，面向南方看，月亮此時在左前方的東南方天空中。"
-            },
-            {
-                time: getFormattedDateTimeOffset(-2), // 2小時前
-                direction: "南 (180°)",
-                altitude: 60,
-                phase: "上弦月",
-                notes: "月亮移動到了正南方，升得很高，高度角大約有60度，是今天最高的位置！"
-            },
-            {
-                time: getFormattedDateTimeOffset(0), // 現在
-                direction: "西南 (225°)",
-                altitude: 35,
-                phase: "上弦月",
-                notes: "準備上床睡覺前，月亮已經移到右前方的西南方天空，而且高度變低了。"
+                id: 1,
+                time: '2026-09-04 19:00',
+                azimuth: '正南 (180°)',
+                altitude: '45°',
+                phaseName: '上弦月',
+                notes: '操場觀測，天空無雲，月亮很清晰'
             }
         ];
 
-        // 輔助函式：取得美化的時間格式
-        function getFormattedDateTimeOffset(hoursOffset) {
-            const d = new Date();
-            d.setHours(d.getHours() + hoursOffset);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
+        // 月相詳細資料
+        const MOON_PHASES = [
+            { name: '🌑 新月 (朔)', desc: '農曆初一。月亮亮面背對地球，與太陽同升同落，夜空看不見月亮。' },
+            { name: '🌒 眉月', desc: '農曆初三至初四。夕陽西下後可在西方低空看到彎彎如眉毛的亮面（亮右邊）。' },
+            { name: '🌓 上弦月', desc: '農曆初七至初八。亮面在右半邊，黃昏時在中天（正南方）最高，半夜在西方落下。' },
+            { name: '🌔 盈凸月', desc: '農曆初十至十一。亮面大於半圓，大部分亮面在右邊，傍晚從東南方升起。' },
+            { name: '🌕 滿月 (望)', desc: '農曆十五至十六。整顆月亮通亮，太陽西落時月亮從東方升起，整夜可見。' },
+            { name: '🌖 虧凸月', desc: '農曆十八至十九。亮面開始缺角，亮面在左半邊居多，入夜後從東方升起。' },
+            { name: '🌗 下弦月', desc: '農曆二十二至二十三。亮面在左半邊，半夜才從東方升起，清晨在中天（正南方）。' },
+            { name: '🌘 殘月', desc: '農曆二十五至二十六。彎彎亮面在左邊，黎明前出現在東方低空，隨太陽升起而隱沒。' }
+        ];
 
-        // 2. DOM 元素宣告
-        const gridContainer = document.getElementById('grid-container');
-        const moonGroup = document.getElementById('moon-group');
-        const moonLitPath = document.getElementById('moon-lit-path');
-        const moonFullCircle = document.getElementById('moon-full-circle');
+        // DOM 引用宣告
+        let altSlider, azSlider, phaseSlider, gridContainer;
+        let moonGroup, moonLitPath, moonFullCircle;
+        let altVal, azVal, phaseName, phaseDesc;
 
-        const altSlider = document.getElementById('altitude-slider');
-        const altVal = document.getElementById('altitude-val');
-        const azSlider = document.getElementById('azimuth-slider');
-        const azVal = document.getElementById('azimuth-val');
-        const phaseSlider = document.getElementById('phase-slider');
-        const phaseName = document.getElementById('phase-name');
-        const phaseDesc = document.getElementById('phase-desc');
-
-        const obsNotesInput = document.getElementById('obs-notes');
-        const recordsTbody = document.getElementById('records-tbody');
-
-        // 3. 事件監聽初始化
+        // DOM 載入後安全初始化
         window.addEventListener('DOMContentLoaded', () => {
-            // 從 LocalStorage 載入歷史資料 (如果有)
-            const saved = localStorage.getItem('moon_obs_records');
-            if (saved) {
-                records = JSON.parse(saved);
+            altSlider = document.getElementById('altitude-slider');
+            azSlider = document.getElementById('azimuth-slider');
+            phaseSlider = document.getElementById('phase-slider');
+            gridContainer = document.getElementById('grid-container');
+
+            moonGroup = document.getElementById('moon-group');
+            moonLitPath = document.getElementById('moon-lit-path');
+            moonFullCircle = document.getElementById('moon-full-circle');
+
+            altVal = document.getElementById('altitude-val');
+            azVal = document.getElementById('azimuth-val');
+            phaseName = document.getElementById('phase-name');
+            phaseDesc = document.getElementById('phase-desc');
+
+            // 安全讀取 LocalStorage (防程式崩潰)
+            try {
+                const saved = localStorage.getItem('moon_obs_records');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        records = parsed;
+                    }
+                }
+            } catch (err) {
+                console.error("LocalStorage format error, reset:", err);
+                localStorage.removeItem('moon_obs_records');
             }
-            
+
             // 綁定輸入滑桿
             altSlider.addEventListener('input', (e) => {
-                currentAltitude = parseInt(e.target.value);
+                currentAlt = parseInt(e.target.value);
                 updateMoonVisualization();
             });
 
             azSlider.addEventListener('input', (e) => {
-                currentAzimuth = parseInt(e.target.value);
+                currentAz = parseInt(e.target.value);
                 updateMoonVisualization();
             });
 
             phaseSlider.addEventListener('input', (e) => {
-                setMoonPhase(parseInt(e.target.value), false);
+                currentPhaseIndex = parseInt(e.target.value);
+                updateMoonVisualization();
             });
 
-            // 綁定星空畫布的滑鼠及觸控拖曳事件
+            // 初始化星空拖曳與繪圖畫布
             setupSkyDragging();
+            initDrawingCanvas();
 
             // 繪製初始狀態
             updateMoonVisualization();
             renderRecordsTable();
         });
 
-        // 4. 夜空拖曳定位算法
-        function setupSkyDragging() {
-            function updateCoordsFromEvent(clientX, clientY) {
-                const rect = gridContainer.getBoundingClientRect();
-                const x = clientX - rect.left;
-                const y = clientY - rect.top;
-
-                // 將畫布的實際像素寬高映射到座標軸設定 (500x300 SVG viewbox)
-                const svgX = (x / rect.width) * 500;
-                const svgY = (y / rect.height) * 300;
-
-                // 方位角限制與映射 (東90°到西270°，對應 svgX 40到460)
-                let azimuth = 90 + ((svgX - 40) / 420) * 180;
-                // 高度角限制與映射 (0°到90°，對應 svgY 260到40)
-                let altitude = ((260 - svgY) / 220) * 90;
-
-                // 數值安全限幅
-                azimuth = Math.max(90, Math.min(270, azimuth));
-                altitude = Math.max(0, Math.min(90, altitude));
-
-                currentAltitude = Math.round(altitude);
-                currentAzimuth = Math.round(azimuth);
-
-                updateSliders();
-                updateMoonVisualization();
-            }
-
-            // 滑鼠事件
-            gridContainer.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                updateCoordsFromEvent(e.clientX, e.clientY);
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) updateCoordsFromEvent(e.clientX, e.clientY);
-            });
-
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
-
-            // 行動裝置觸控事件 (解決行動觀測、平板操作問題)
-            gridContainer.addEventListener('touchstart', (e) => {
-                isDragging = true;
-                const touch = e.touches[0];
-                updateCoordsFromEvent(touch.clientX, touch.clientY);
-                e.preventDefault(); // 避免手機網頁滾動干擾拖曳
-            }, { passive: false });
-
-            gridContainer.addEventListener('touchmove', (e) => {
-                if (isDragging) {
-                    const touch = e.touches[0];
-                    updateCoordsFromEvent(touch.clientX, touch.clientY);
-                }
-                e.preventDefault();
-            }, { passive: false });
-
-            gridContainer.addEventListener('touchend', () => {
-                isDragging = false;
-            });
+        // 方位角度轉換文字描述
+        function getAzimuthText(az) {
+            if (az < 112.5) return `東偏南 (${az}°)`;
+            if (az <= 157.5) return `東南 (${az}°)`;
+            if (az < 202.5) return `正南 (${az}°)`;
+            if (az <= 247.5) return `西南 (${az}°)`;
+            return `西偏南 (${az}°)`;
         }
 
-        // 5. 更新介面顯示
-        function updateSliders() {
-            altSlider.value = currentAltitude;
-            azSlider.value = currentAzimuth;
-        }
-
-        function getDirectionText(az) {
-            if (az <= 112.5) return `東 (${az}°)`;
-            if (az < 157.5) return `東南 (${az}°)`;
-            if (az <= 202.5) return `正南 (${az}°)`;
-            if (az < 247.5) return `西南 (${az}°)`;
-            return `西 (${az}°)`;
-        }
-
+        // 畫面更新核心函式
         function updateMoonVisualization() {
-            // 更新文字顯示
-            altVal.innerText = `${currentAltitude}°`;
-            azVal.innerText = getDirectionText(currentAzimuth);
+            if (!altVal || !azVal) return;
 
-            // 映射到畫布位置並進行平移
-            const targetX = 40 + ((currentAzimuth - 90) / 180) * 420;
-            const targetY = 260 - (currentAltitude / 90) * 220;
+            // 1. 更新數值顯示
+            altVal.textContent = `${currentAlt}°`;
+            azVal.textContent = getAzimuthText(currentAz);
+            
+            phaseName.textContent = MOON_PHASES[currentPhaseIndex].name;
+            phaseDesc.textContent = MOON_PHASES[currentPhaseIndex].desc;
 
-            moonGroup.setAttribute('transform', `translate(${targetX}, ${targetY})`);
+            // 同步滑桿
+            altSlider.value = currentAlt;
+            azSlider.value = currentAz;
+            phaseSlider.value = currentPhaseIndex;
 
-            // 繪製月相亮部
-            const phase = moonPhases[currentPhase];
-            if (phase.path === "full") {
-                moonLitPath.setAttribute('d', '');
-                moonFullCircle.style.display = "block";
-            } else {
-                moonFullCircle.style.display = "none";
-                moonLitPath.setAttribute('d', phase.path);
-            }
-        }
-
-        // 月相切換
-        function setMoonPhase(index, updateSliderInput = true) {
-            currentPhase = index;
-            if (updateSliderInput) {
-                phaseSlider.value = index;
-            }
-
-            // 更新按鈕高亮
+            // 更新月相按鈕高亮
             document.querySelectorAll('.phase-btn').forEach((btn, idx) => {
-                if (idx === index) {
-                    btn.className = "phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white";
+                if (idx === currentPhaseIndex) {
+                    btn.className = "phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white shadow cursor-pointer";
                 } else {
-                    btn.className = "phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300";
+                    btn.className = "phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 cursor-pointer";
                 }
             });
 
-            phaseName.innerText = moonPhases[index].name;
-            phaseDesc.innerText = moonPhases[index].desc;
+            // 2. 計算月亮在 SVG 座標系中的位置
+            const minX = 40, maxX = 460;
+            const moonX = minX + ((currentAz - 90) / 180) * (maxX - minX);
+
+            const minY = 260, maxY = 40;
+            const moonY = minY - (currentAlt / 90) * (minY - maxY);
+
+            moonGroup.setAttribute('transform', `translate(${moonX}, ${moonY})`);
+
+            // 3. 繪製月相盈虧 SVG Path
+            updateMoonPhaseShape(currentPhaseIndex);
+        }
+
+        // 根據月相 index 繪製月亮光亮部位
+        function updateMoonPhaseShape(phaseIdx) {
+            const r = 16;
+            moonFullCircle.style.display = 'none';
+            moonLitPath.style.display = 'block';
+
+            let pathD = '';
+
+            switch (phaseIdx) {
+                case 0: // 新月
+                    moonLitPath.style.display = 'none';
+                    break;
+                case 1: // 眉月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 1 0 ${r} A ${r*0.5} ${r} 0 0 0 0 -${r}`;
+                    break;
+                case 2: // 上弦月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 1 0 ${r} Z`;
+                    break;
+                case 3: // 盈凸月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 1 0 ${r} A ${r*0.5} ${r} 0 0 1 0 -${r}`;
+                    break;
+                case 4: // 滿月
+                    moonLitPath.style.display = 'none';
+                    moonFullCircle.style.display = 'block';
+                    break;
+                case 5: // 虧凸月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 0 0 ${r} A ${r*0.5} ${r} 0 0 0 0 -${r}`;
+                    break;
+                case 6: // 下弦月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 0 0 ${r} Z`;
+                    break;
+                case 7: // 殘月
+                    pathD = `M 0 -${r} A ${r} ${r} 0 0 0 0 ${r} A ${r*0.5} ${r} 0 0 1 0 -${r}`;
+                    break;
+            }
+
+            if (phaseIdx !== 0 && phaseIdx !== 4) {
+                moonLitPath.setAttribute('d', pathD);
+            }
+        }
+
+        // 快捷選擇月相
+        function setMoonPhase(idx) {
+            currentPhaseIndex = idx;
             updateMoonVisualization();
         }
 
-        // 6. 動態模擬動畫
-        // 模擬月球一日的移動軌跡（從東南方升起到西北方落下之拱形路線）
-        function simulateDayMovement() {
-            if (dayInterval) {
-                clearInterval(dayInterval);
-                dayInterval = null;
-                document.getElementById('play-day-btn').innerHTML = '<span>🎬 模擬一天移動</span>';
-                return;
+        // 星空拖曳事件處理 (支援滑鼠與觸控)
+        function setupSkyDragging() {
+            let isDragging = false;
+
+            function handleMove(clientX, clientY) {
+                if (!gridContainer) return;
+                const rect = gridContainer.getBoundingClientRect();
+                let x = clientX - rect.left;
+                let y = clientY - rect.top;
+
+                x = Math.max(0, Math.min(rect.width, x));
+                y = Math.max(0, Math.min(rect.height, y));
+
+                let normX = x / rect.width;
+                let normY = y / rect.height;
+
+                let az = 90 + normX * 180;
+                let alt = 90 - normY * 90;
+
+                currentAlt = Math.round(alt);
+                currentAz = Math.round(az);
+                updateMoonVisualization();
             }
 
-            document.getElementById('play-day-btn').innerHTML = '<span>🛑 停止模擬</span>';
-            // 清理另一個動畫
-            if (phaseInterval) togglePhaseAnimation();
+            gridContainer.addEventListener('mousedown', (e) => {
+                if (isDrawingMode) return; // 繪圖模式下不觸發月亮拖曳
+                isDragging = true;
+                handleMove(e.clientX, e.clientY);
+            });
 
-            let az = 90; // 從正東出發
-            dayInterval = setInterval(() => {
-                az += 3;
-                if (az > 270) {
-                    // 完成一次週期
-                    clearInterval(dayInterval);
-                    dayInterval = null;
-                    document.getElementById('play-day-btn').innerHTML = '<span>🎬 模擬一天移動</span>';
-                    return;
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) handleMove(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            gridContainer.addEventListener('touchstart', (e) => {
+                if (isDrawingMode) return;
+                if (e.touches.length > 0) {
+                    isDragging = true;
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
                 }
+            }, { passive: true });
 
-                currentAzimuth = az;
-                // 拱形高度計算，在正南180°時高度最高 (設為約65度)
-                const radian = Math.PI * (az - 90) / 180;
-                currentAltitude = Math.round(Math.sin(radian) * 65);
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging && e.touches.length > 0) {
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
 
-                updateSliders();
-                updateMoonVisualization();
-            }, 60);
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
         }
 
-        // 動態播放月相盈虧動畫
+        // 模擬一天東升西落移動
+        function simulateDayMovement() {
+            if (isDaySimulating) return;
+            isDaySimulating = true;
+            
+            const playBtn = document.getElementById('play-day-btn');
+            playBtn.disabled = true;
+            playBtn.classList.add('opacity-50');
+
+            let step = 0;
+            const totalSteps = 40;
+            const startAz = 90;
+            const endAz = 270;
+
+            const timer = setInterval(() => {
+                step++;
+                const progress = step / totalSteps;
+                currentAz = Math.round(startAz + progress * (endAz - startAz));
+                currentAlt = Math.round(Math.sin(progress * Math.PI) * 75);
+
+                updateMoonVisualization();
+
+                if (step >= totalSteps) {
+                    clearInterval(timer);
+                    isDaySimulating = false;
+                    playBtn.disabled = false;
+                    playBtn.classList.remove('opacity-50');
+                }
+            }, 50);
+        }
+
+        // 播放月相動畫
         function togglePhaseAnimation() {
             const btnText = document.getElementById('play-phase-text');
-            if (phaseInterval) {
-                clearInterval(phaseInterval);
-                phaseInterval = null;
-                btnText.innerText = "🔄 播放月相盈虧";
-                return;
+            if (isPhaseAnimating) {
+                clearInterval(phaseAnimInterval);
+                isPhaseAnimating = false;
+                btnText.textContent = '🔄 播放月相盈虧';
+            } else {
+                isPhaseAnimating = true;
+                btnText.textContent = '⏸️ 暫停月相動畫';
+                phaseAnimInterval = setInterval(() => {
+                    currentPhaseIndex = (currentPhaseIndex + 1) % 8;
+                    updateMoonVisualization();
+                }, 800);
             }
-
-            btnText.innerText = "🛑 停止播放";
-            // 清理另一個動畫
-            if (dayInterval) simulateDayMovement();
-
-            phaseInterval = setInterval(() => {
-                currentPhase = (currentPhase + 1) % 8;
-                setMoonPhase(currentPhase);
-            }, 800);
         }
 
-        // 7. 觀測記錄表管理 (LocalStorage 儲存)
-        function saveRecords() {
-            localStorage.setItem('moon_obs_records', JSON.stringify(records));
+        // ==========================================
+        // 螢幕手繪註記 (Drawing Canvas Core)
+        // ==========================================
+        function initDrawingCanvas() {
+            const canvas = document.getElementById('drawing-canvas');
+            if (!canvas) return;
+
+            function resizeCanvas() {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (canvas.width > 0 && canvas.height > 0) {
+                    tempCtx.drawImage(canvas, 0, 0);
+                }
+
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const ctx = canvas.getContext('2d');
+                if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                    ctx.drawImage(tempCanvas, 0, 0);
+                }
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            let drawing = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            function getPos(e) {
+                if (e.touches && e.touches.length > 0) {
+                    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+                return { x: e.clientX, y: e.clientY };
+            }
+
+            function startDraw(e) {
+                if (!isDrawingMode) return;
+                drawing = true;
+                const pos = getPos(e);
+                lastX = pos.x;
+                lastY = pos.y;
+            }
+
+            function draw(e) {
+                if (!drawing || !isDrawingMode) return;
+                const ctx = canvas.getContext('2d');
+                const pos = getPos(e);
+
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.strokeStyle = drawColor;
+                ctx.lineWidth = drawLineWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+
+                lastX = pos.x;
+                lastY = pos.y;
+            }
+
+            function stopDraw() {
+                drawing = false;
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (isDrawingMode) {
+                    startDraw(e);
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (isDrawingMode) {
+                    draw(e);
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function toggleDrawingMode() {
+            isDrawingMode = !isDrawingMode;
+            const canvas = document.getElementById('drawing-canvas');
+            const btn = document.getElementById('draw-toggle-btn');
+            const statusTag = document.getElementById('draw-status-tag');
+
+            if (isDrawingMode) {
+                canvas.style.pointerEvents = 'auto';
+                canvas.style.cursor = 'crosshair';
+                btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-400');
+                btn.classList.remove('bg-slate-800', 'text-slate-200', 'border-slate-700');
+                statusTag.textContent = '開啟中';
+                statusTag.className = 'text-[10px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded animate-pulse';
+            } else {
+                canvas.style.pointerEvents = 'none';
+                canvas.style.cursor = 'default';
+                btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-400');
+                btn.classList.add('bg-slate-800', 'text-slate-200', 'border-slate-700');
+                statusTag.textContent = '關閉';
+                statusTag.className = 'text-[10px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded';
+            }
+        }
+
+        function setDrawColor(color) {
+            drawColor = color;
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                if (btn.getAttribute('data-color') === color) {
+                    btn.classList.add('border-white', 'scale-110');
+                    btn.classList.remove('border-transparent');
+                } else {
+                    btn.classList.remove('border-white', 'scale-110');
+                    btn.classList.add('border-transparent');
+                }
+            });
+
+            if (!isDrawingMode) {
+                toggleDrawingMode();
+            }
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('drawing-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // ==========================================
+        // 表格與紀錄核心邏輯
+        // ==========================================
+        function addCurrentRecord() {
+            const notesInput = document.getElementById('obs-notes');
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const newRecord = {
+                id: Date.now(),
+                time: timeStr,
+                azimuth: getAzimuthText(currentAz),
+                altitude: `${currentAlt}°`,
+                phaseName: MOON_PHASES[currentPhaseIndex].name.split(' ')[1] || MOON_PHASES[currentPhaseIndex].name,
+                notes: notesInput.value.trim() || '無備註'
+            };
+
+            records.unshift(newRecord);
+            notesInput.value = '';
+            saveAndRender();
+        }
+
+        function deleteRecord(id) {
+            records = records.filter(r => r.id !== id);
+            saveAndRender();
+        }
+
+        function updateRecordField(id, field, value) {
+            const record = records.find(r => r.id === id);
+            if (record) {
+                record[field] = value;
+                saveRecordsToStorage();
+            }
+        }
+
+        function clearAllRecords() {
+            if (confirm('確定要清空所有觀測記錄嗎？')) {
+                records = [];
+                saveAndRender();
+            }
+        }
+
+        function saveRecordsToStorage() {
+            try {
+                localStorage.setItem('moon_obs_records', JSON.stringify(records));
+            } catch (e) {
+                console.error("儲存失敗:", e);
+            }
+        }
+
+        function saveAndRender() {
+            saveRecordsToStorage();
+            renderRecordsTable();
         }
 
         function renderRecordsTable() {
-            recordsTbody.innerHTML = '';
-            
+            const tbody = document.getElementById('records-tbody');
+            if (!tbody) return;
+
             if (records.length === 0) {
-                recordsTbody.innerHTML = `
+                tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-500 italic">
-                            目前無任何觀測記錄，請使用上方控制台進行觀測並新增記錄！
+                        <td colspan="7" class="py-8 text-center text-slate-500">
+                            目前尚無觀測記錄，請調整上方參數後點擊「將當前數值加入觀測表」。
                         </td>
                     </tr>
                 `;
                 return;
             }
 
-            records.forEach((rec, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-900/30 transition-colors";
-                
-                // 動態時間輸入欄
-                const timeInput = `<input type="datetime-local" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-500" value="${rec.time}" onchange="updateRecordValue(${idx}, 'time', this.value)">`;
-                
-                // 動態筆記輸入欄
-                const notesInput = `<input type="text" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs w-full focus:outline-none focus:border-indigo-500" value="${rec.notes}" onchange="updateRecordValue(${idx}, 'notes', this.value)" placeholder="點擊編輯觀測備註...">`;
-
-                tr.innerHTML = `
-                    <td class="py-3 px-4 text-center font-mono text-slate-500">${idx + 1}</td>
-                    <td class="py-3 px-4">${timeInput}</td>
-                    <td class="py-3 px-4 font-semibold text-indigo-300">${rec.direction}</td>
-                    <td class="py-3 px-4 font-bold text-amber-300">${rec.altitude}°</td>
+            tbody.innerHTML = records.map((r, index) => `
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3 px-4 text-center font-mono text-slate-400 text-xs">${records.length - index}</td>
                     <td class="py-3 px-4">
-                        <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-950 text-slate-300 text-xs border border-slate-800">
-                            <span class="text-xs">🌓</span> ${rec.phase}
-                        </span>
+                        <input type="text" value="${r.time}" 
+                               onchange="updateRecordField(${r.id}, 'time', this.value)"
+                               class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200 w-full focus:border-indigo-500 font-mono">
                     </td>
-                    <td class="py-3 px-4">${notesInput}</td>
+                    <td class="py-3 px-4 font-mono text-indigo-300 font-medium text-xs">${r.azimuth}</td>
+                    <td class="py-3 px-4 font-mono text-amber-300 font-medium text-xs">${r.altitude}</td>
+                    <td class="py-3 px-4 text-amber-200 font-medium text-xs">${r.phaseName}</td>
+                    <td class="py-3 px-4">
+                        <input type="text" value="${r.notes}" 
+                               onchange="updateRecordField(${r.id}, 'notes', this.value)"
+                               class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300 w-full focus:border-indigo-500">
+                    </td>
                     <td class="py-3 px-4 text-center">
-                        <button onclick="deleteRecord(${idx})" class="text-red-400 hover:text-red-300 hover:underline text-xs">刪除</button>
+                        <button onclick="deleteRecord(${r.id})" class="text-xs text-red-400 hover:text-red-300 p-1 hover:bg-red-950/50 rounded transition-all cursor-pointer" title="刪除此紀錄">
+                            🗑️
+                        </button>
                     </td>
-                `;
-                recordsTbody.appendChild(tr);
-            });
+                </tr>
+            `).join('');
         }
 
-        // 修改個別資料綁定
-        function updateRecordValue(index, field, value) {
-            records[index][field] = value;
-            saveRecords();
-        }
-
-        // 新增目前數值
-        function addCurrentRecord() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const currentTimeStr = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-            const newRecord = {
-                time: currentTimeStr,
-                direction: getDirectionText(currentAzimuth),
-                altitude: currentAltitude,
-                phase: moonPhases[currentPhase].name,
-                notes: obsNotesInput.value.trim() || "在預設地點進行了月亮常規高度觀測。"
-            };
-
-            records.push(newRecord);
-            obsNotesInput.value = ''; // 清空輸入欄
-            saveRecords();
-            renderRecordsTable();
-            
-            // 滾動提示
-            recordsTbody.lastElementChild?.classList.add('bg-amber-500/10');
-            setTimeout(() => {
-                recordsTbody.lastElementChild?.classList.remove('bg-amber-500/10');
-            }, 1000);
-        }
-
-        // 刪除單筆
-        function deleteRecord(idx) {
-            records.splice(idx, 1);
-            saveRecords();
-            renderRecordsTable();
-        }
-
-        // 清空
-        function clearAllRecords() {
-            if (confirm("您確定要清除目前所有的月相與高度角觀測紀錄嗎？（清除後將無法復原）")) {
-                records = [];
-                saveRecords();
-                renderRecordsTable();
-            }
-        }
-
-        // 8. 匯出 CSV 檔（Excel 相容，無亂碼問題）
         function exportCSV() {
             if (records.length === 0) {
-                alert("目前觀測表中沒有任何數據可供匯出！");
+                alert('目前沒有紀錄可供匯出！');
                 return;
             }
 
-            // 使用 \ufeff 加入 UTF-8 BOM，防止 Windows Excel 開啟時發生中文亂碼
-            let csvContent = "\ufeff"; 
-            csvContent += "觀測序號,觀測時間 (年/月/日 時:分),觀測方位 (橫軸),高度角 (縱軸),觀測月相,觀測筆記\n";
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+            csvContent += "編號,觀測時間,方位,高度角,觀測月相,觀測與環境筆記\n";
 
-            records.forEach((rec, idx) => {
-                // 將 ISO 時間轉為可讀格式
-                const cleanTime = rec.time.replace('T', ' ');
-                const cleanNotes = rec.notes.replace(/"/g, '""'); // 雙引號溢出處理
-                csvContent += `"${idx + 1}","${cleanTime}","${rec.direction}","${rec.altitude}°","${rec.phase}","${cleanNotes}"\n`;
+            records.forEach((r, idx) => {
+                const row = [
+                    records.length - idx,
+                    `"${r.time}"`,
+                    `"${r.azimuth}"`,
+                    `"${r.altitude}"`,
+                    `"${r.phaseName}"`,
+                    `"${r.notes.replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
             const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", `月亮高度角觀測紀錄表_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.setAttribute("download", `月亮觀測記錄_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

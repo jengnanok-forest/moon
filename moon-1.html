@@ -48,17 +48,18 @@
             height: 100%;
             background-color: #f7fafc;
             border-left: 2px solid #e2e8f0;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             z-index: 10;
             box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
         }
 
         h2 {
             font-size: 20px;
             color: #2d3748;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-weight: 700;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 10px;
@@ -67,8 +68,8 @@
         .data-group {
             background-color: white;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
             border: 1px solid #edf2f7;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
@@ -82,13 +83,13 @@
         }
 
         .data-value {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             color: #2d3748;
         }
 
         .data-sub {
-            font-size: 14px;
+            font-size: 13px;
             color: #a0aec0;
             margin-top: 3px;
         }
@@ -121,18 +122,73 @@
             100% { transform: scale(1); }
         }
 
+        /* 繪圖工具樣式 */
+        .draw-tools {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            padding: 8px 4px;
+            font-size: 13px;
+            margin-top: 0;
+            background-color: #edf2f7;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-btn.active {
+            background-color: #3182ce;
+            color: white;
+            border-color: #2b6cb0;
+        }
+
+        .color-picker {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 4px;
+            background-color: #f7fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #cbd5e0;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.15);
+        }
+
+        .color-dot.active {
+            border: 3px solid #2d3748;
+            transform: scale(1.25);
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+
         /* 控制按鈕 */
         button {
             background-color: #edf2f7;
             color: #2d3748;
             border: 1px solid #cbd5e0;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         button:hover {
@@ -147,7 +203,7 @@
         .checkbox-container {
             display: flex;
             align-items: center;
-            margin: 15px 0;
+            margin: 10px 0;
             cursor: pointer;
             font-size: 14px;
             color: #4a5568;
@@ -162,23 +218,23 @@
 
         /* 操作指南說明書 */
         #instructions {
-            margin-top: auto;
+            margin-top: 15px;
             background-color: #ebf8ff;
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             border-left: 4px solid #3182ce;
         }
 
         #instructions h4 {
             color: #2b6cb0;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 6px;
+            font-size: 13px;
         }
 
         #instructions p {
             font-size: 12px;
             color: #2b6cb0;
-            line-height: 1.6;
+            line-height: 1.5;
         }
 
         /* SVG 畫布及元素 */
@@ -189,6 +245,17 @@
             width: 100%;
             height: 100%;
             z-index: 2;
+        }
+
+        /* 螢幕註記 Canvas 畫布 (位於 SVG 上方) */
+        #annotation-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 6;
+            pointer-events: none; /* 預設允許點擊穿透到下方 SVG */
         }
 
         .draggable {
@@ -215,6 +282,9 @@
 <body>
 
     <div id="sky-container">
+        <!-- 畫筆註記畫布 Layer -->
+        <canvas id="annotation-canvas"></canvas>
+
         <div id="ground"></div>
         <svg id="canvas">
             <!-- 漸層天空背景 -->
@@ -294,6 +364,23 @@
             <div id="status-badge" class="status-unaligned">未對準 ❌</div>
         </div>
 
+        <!-- 新增：螢幕繪圖註記工具區 -->
+        <div class="data-group">
+            <div class="data-label">螢幕註記畫筆</div>
+            <div class="draw-tools">
+                <button id="btn-mode-move" class="tool-btn active">🖐️ 操作</button>
+                <button id="btn-mode-draw" class="tool-btn">✏️ 畫筆</button>
+            </div>
+            <div class="color-picker" id="color-picker">
+                <div class="color-dot active" data-color="#e53e3e" style="background-color: #e53e3e;" title="紅色"></div>
+                <div class="color-dot" data-color="#ecc94b" style="background-color: #ecc94b;" title="黃色"></div>
+                <div class="color-dot" data-color="#38a169" style="background-color: #38a169;" title="綠色"></div>
+                <div class="color-dot" data-color="#3182ce" style="background-color: #3182ce;" title="藍色"></div>
+                <div class="color-dot" data-color="#ffffff" style="background-color: #ffffff;" title="白色"></div>
+            </div>
+            <button id="btn-clear-draw" style="width: 100%; font-size: 13px; margin-top: 8px;">🗑️ 清除所有註記</button>
+        </div>
+
         <label class="checkbox-container">
             <input type="checkbox" id="chk-guide" checked>
             顯示對準指南線
@@ -304,9 +391,9 @@
         <div id="instructions">
             <h4>【使用操作說明】</h4>
             <p>
-                1. <b>拖動月亮</b>：拖動左側天空中黃色的彎月。<br><br>
-                2. <b>旋轉觀測器</b>：拖動量角器的<b>藍色視管</b>（或右邊緣），此時雙眼會隨之旋轉。將視管對準月亮。<br><br>
-                3. <b>讀取角度</b>：鉛錘線始終指向地心。當對準月亮時，鉛錘線垂直指向的刻度盤角度，正是「高度角」！
+                1. <b>拖動月亮/觀測器</b>：切換至「🖐️ 操作」模式，拖動月亮或藍色視管。<br><br>
+                2. <b>螢幕註記</b>：切換至「✏️ 畫筆」模式（或直接點擊顏色），可在天空畫面上直接繪圖、標記重點。<br><br>
+                3. <b>讀取角度</b>：當視管對準月亮時，鉛錘線垂直指向的角度即為高度角。
             </p>
         </div>
     </div>
@@ -326,11 +413,23 @@
         const chkGuide = document.getElementById('chk-guide');
         const btnReset = document.getElementById('btn-reset');
 
+        /* 繪圖畫布元件與變數 */
+        const drawCanvas = document.getElementById('annotation-canvas');
+        const ctx = drawCanvas.getContext('2d');
+        const btnModeMove = document.getElementById('btn-mode-move');
+        const btnModeDraw = document.getElementById('btn-mode-draw');
+        const btnClearDraw = document.getElementById('btn-clear-draw');
+        const colorDots = document.querySelectorAll('.color-dot');
+
+        let currentMode = 'move'; // 'move' 或 'draw'
+        let strokeColor = '#e53e3e';
+        let isDrawing = false;
+        let lastDrawPos = { x: 0, y: 0 };
+
         let skyWidth = sky.clientWidth;
         let skyHeight = sky.clientHeight;
 
         // 【位置上移】
-        // 觀測器圓心設置在 0.76 / 0.48 處，使之高於地面
         let obsX = skyWidth * 0.76;
         let obsY = skyHeight * 0.48;
 
@@ -342,6 +441,21 @@
         let dragTarget = null;
         let startAngle = 0;
         let startProtractorAngle = 0;
+
+        // 初始化與調整註記 Canvas 尺寸
+        function initDrawCanvas() {
+            // 保存原畫布內容避免縮放重置
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = drawCanvas.width;
+            tempCanvas.height = drawCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(drawCanvas, 0, 0);
+
+            drawCanvas.width = sky.clientWidth;
+            drawCanvas.height = sky.clientHeight;
+
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
 
         // 生成刻度 (左右相反：0° 在下方，90° 在最右側，180° 在最上方)
         function generateTicks() {
@@ -395,10 +509,8 @@
             moonGroup.setAttribute("transform", `translate(${moonX}, ${moonY})`);
             protractorGroup.setAttribute("transform", `translate(${obsX}, ${obsY})`);
             
-            // 順時針旋轉對應高度角
             rotatableParts.setAttribute("transform", `rotate(${protractorAngle})`);
 
-            // 月亮在左，觀測器在右，計算高度角
             const dx = moonX - obsX;
             const dy = obsY - moonY; 
             let targetAngle = Math.atan2(dy, -dx) * 180 / Math.PI; 
@@ -443,7 +555,9 @@
             };
         }
 
+        /* 觀測元件拖拽邏輯 */
         function onStart(e) {
+            if (currentMode !== 'move') return;
             const coords = getMouseCoords(e);
             const target = e.target;
 
@@ -462,7 +576,7 @@
         }
 
         function onMove(e) {
-            if (!dragTarget) return;
+            if (!dragTarget || currentMode !== 'move') return;
             const coords = getMouseCoords(e);
 
             if (dragTarget === 'moon') {
@@ -484,16 +598,103 @@
             }
         }
 
-        // 螢幕手指放開
         function onEnd() {
             dragTarget = null;
         }
+
+        /* 螢幕畫筆手繪註記邏輯 */
+        function getDrawCoords(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches.clientX : e.clientX;
+            const clientY = e.touches ? e.touches.clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            if (currentMode !== 'draw') return;
+            isDrawing = true;
+            lastDrawPos = getDrawCoords(e);
+            e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing || currentMode !== 'draw') return;
+            const pos = getDrawCoords(e);
+            
+            ctx.beginPath();
+            ctx.moveTo(lastDrawPos.x, lastDrawPos.y);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 5; // 醒目的粗線條 (5px)
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            lastDrawPos = pos;
+            e.preventDefault();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        /* 模式與工具切換機制 */
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'draw') {
+                btnModeDraw.classList.add('active');
+                btnModeMove.classList.remove('active');
+                drawCanvas.style.pointerEvents = 'auto'; // 開啟繪圖層點擊
+            } else {
+                btnModeMove.classList.add('active');
+                btnModeDraw.classList.remove('active');
+                drawCanvas.style.pointerEvents = 'none'; // 讓點擊穿透回物件拖動
+            }
+        }
+
+        btnModeMove.addEventListener('click', () => setMode('move'));
+        btnModeDraw.addEventListener('click', () => setMode('draw'));
+
+        colorDots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                colorDots.forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+                strokeColor = dot.dataset.color;
+                setMode('draw'); // 點選顏色時自動切換至畫筆模式
+            });
+        });
+
+        btnClearDraw.addEventListener('click', () => {
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        });
+
+        /* 事件監聽註冊 */
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', draw);
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('mouseleave', stopDrawing);
+
+        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        drawCanvas.addEventListener('touchmove', draw, {passive: false});
+        drawCanvas.addEventListener('touchend', stopDrawing);
+
+        canvas.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+
+        canvas.addEventListener('touchstart', onStart, {passive: false});
+        window.addEventListener('touchmove', onMove, {passive: false});
+        window.addEventListener('touchend', onEnd);
 
         window.addEventListener('resize', () => {
             skyWidth = sky.clientWidth;
             skyHeight = sky.clientHeight;
             obsX = skyWidth * 0.76;
             obsY = skyHeight * 0.48;
+            initDrawCanvas();
             updatePositions();
         });
 
@@ -506,14 +707,8 @@
 
         chkGuide.addEventListener('change', updatePositions);
 
-        canvas.addEventListener('mousedown', onStart);
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onEnd);
-
-        canvas.addEventListener('touchstart', onStart, {passive: false});
-        window.addEventListener('touchmove', onMove, {passive: false});
-        window.addEventListener('touchend', onEnd);
-
+        /* 初始執行 */
+        initDrawCanvas();
         generateTicks();
         updatePositions();
     </script>

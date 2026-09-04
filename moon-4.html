@@ -61,6 +61,9 @@
       border: 1px solid var(--border-color);
       padding: 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .card-title {
@@ -78,7 +81,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 250px;
+      min-height: 220px;
     }
 
     .moon-diagram-frame {
@@ -367,36 +370,161 @@
       align-items: center;
       justify-content: center;
     }
+
+    /* ---- 全螢幕 Canvas 註記 ---- */
+    #annotation-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9998;
+      pointer-events: none; /* 預設不擋住底下頁面點擊 */
+      cursor: crosshair;
+    }
+
+    /* ---- 月相視窗下方內嵌註記工具列 ---- */
+    .annotation-toolbar {
+      position: relative;
+      z-index: 10000; /* 高於 Canvas，讓按鈕始終可點擊 */
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .annotation-title {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tool-btn:hover {
+      background: #38bdf8;
+      color: #0b0f19;
+      border-color: #38bdf8;
+    }
+
+    .tool-btn.danger-btn {
+      border-color: #ef4444;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .tool-btn.danger-btn:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .color-picker-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .color-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .color-btn:hover {
+      transform: scale(1.15);
+    }
+
+    .color-btn.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+      transform: scale(1.25);
+    }
   </style>
 </head>
 <body>
 
+<!-- 全螢幕繪圖 Canvas Overlay -->
+<canvas id="annotation-canvas"></canvas>
+
 <div class="container">
   <div class="top-section">
-    <!-- 左上：向量月相示意圖視窗 -->
+    <!-- 左上：向量月相示意圖視窗 + 螢幕註記控制工具列 -->
     <div class="card">
-      <div class="card-title">月相視窗 (真實天文精算)</div>
-      <div class="moon-window">
-        <div class="moon-diagram-frame">
-          <svg id="main-moon-svg" width="170" height="170" viewBox="0 0 170 170">
-            <defs>
-              <!-- 暖黃光澤月亮色漸層 -->
-              <radialGradient id="moon-light-grad" cx="40%" cy="40%" r="65%">
-                <stop offset="0%" stop-color="#ffffff"/>
-                <stop offset="45%" stop-color="#fef08a"/>
-                <stop offset="85%" stop-color="#f59e0b"/>
-                <stop offset="100%" stop-color="#d97706"/>
-              </radialGradient>
-            </defs>
-            <!-- 暗面背景圓（月球陰影面） -->
-            <circle cx="85" cy="85" r="80" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-            <!-- 亮面區域（月亮色填滿） -->
-            <path id="main-moon-bright-path" fill="url(#moon-light-grad)" d="" />
-            <!-- 外圈月光微暈輪廓 -->
-            <circle cx="85" cy="85" r="80" fill="none" stroke="#fef08a" stroke-width="1.5" opacity="0.5"/>
-          </svg>
+      <div>
+        <div class="card-title">月相視窗 (真實天文精算)</div>
+        <div class="moon-window">
+          <div class="moon-diagram-frame">
+            <svg id="main-moon-svg" width="170" height="170" viewBox="0 0 170 170">
+              <defs>
+                <!-- 暖黃光澤月亮色漸層 -->
+                <radialGradient id="moon-light-grad" cx="40%" cy="40%" r="65%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="45%" stop-color="#fef08a"/>
+                  <stop offset="85%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </radialGradient>
+              </defs>
+              <!-- 暗面背景圓（月球陰影面） -->
+              <circle cx="85" cy="85" r="80" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+              <!-- 亮面區域（月亮色填滿） -->
+              <path id="main-moon-bright-path" fill="url(#moon-light-grad)" d="" />
+              <!-- 外圈月光微暈輪廓 -->
+              <circle cx="85" cy="85" r="80" fill="none" stroke="#fef08a" stroke-width="1.5" opacity="0.5"/>
+            </svg>
+          </div>
+          <div id="moon-phase-title" class="moon-label">載入中...</div>
         </div>
-        <div id="moon-phase-title" class="moon-label">載入中...</div>
+      </div>
+
+      <!-- 螢幕註記控制區（移至月相視窗下方） -->
+      <div class="annotation-toolbar">
+        <div class="annotation-title">✏️ 螢幕畫筆註記工具</div>
+        <div class="toolbar-controls">
+          <button id="btn-toggle-draw" class="tool-btn">註記模式：關</button>
+          <div class="color-picker-group">
+            <button class="color-btn active" data-color="#ef4444" style="background-color: #ef4444;" title="紅色"></button>
+            <button class="color-btn" data-color="#38bdf8" style="background-color: #38bdf8;" title="亮藍"></button>
+            <button class="color-btn" data-color="#fef08a" style="background-color: #fef08a;" title="月亮黃"></button>
+            <button class="color-btn" data-color="#22c55e" style="background-color: #22c55e;" title="熒光綠"></button>
+            <button class="color-btn" data-color="#ffffff" style="background-color: #ffffff;" title="純白"></button>
+          </div>
+          <button id="btn-clear-draw" class="tool-btn danger-btn">🗑️ 清除</button>
+        </div>
       </div>
     </div>
 
@@ -404,7 +532,7 @@
     <div class="card">
       <div id="current-date-header" class="card-title">當日數據</div>
       <div class="info-list">
-        <!-- 月出沒時刻 -->
+        <!-- 月出沒時間 -->
         <div class="time-row">
           <div class="time-item"><span class="info-label">月出時間：</span><span id="val-moonrise" class="info-value">--:--</span></div>
           <div class="time-item"><span class="info-label">月至中天時間：</span><span id="val-transit" class="info-value">--:--</span></div>
@@ -868,6 +996,107 @@
   }
 
   btnPlaySky.addEventListener('click', toggleSkyAnimation);
+
+  // ---- 螢幕繪圖註記邏輯 (全螢幕 Canvas) ----
+  const annotationCanvas = document.getElementById('annotation-canvas');
+  const drawCtx = annotationCanvas.getContext('2d');
+  const btnToggleDraw = document.getElementById('btn-toggle-draw');
+  const btnClearDraw = document.getElementById('btn-clear-draw');
+  const colorBtns = document.querySelectorAll('.color-btn');
+
+  let isDrawing = false;
+  let isDrawMode = false; // 預設關閉繪圖模式，確保一開始不影響網頁操作
+  let currentColor = '#ef4444'; // 預設亮紅色
+  const LINE_WIDTH = 6; // 線條粗細設定為 6px (清晰醒目)
+
+  // 動態調整 Canvas 大小以填滿畫面
+  function resizeAnnotationCanvas() {
+    annotationCanvas.width = window.innerWidth;
+    annotationCanvas.height = window.innerHeight;
+    
+    // 重設繪圖屬性
+    drawCtx.lineWidth = LINE_WIDTH;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.strokeStyle = currentColor;
+  }
+
+  window.addEventListener('resize', resizeAnnotationCanvas);
+  resizeAnnotationCanvas();
+
+  // 色彩選擇事件處理
+  colorBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentColor = btn.getAttribute('data-color');
+      drawCtx.strokeStyle = currentColor;
+    });
+  });
+
+  // 切換「註記模式」與「瀏覽模式」
+  btnToggleDraw.addEventListener('click', () => {
+    isDrawMode = !isDrawMode;
+    if (isDrawMode) {
+      annotationCanvas.style.pointerEvents = 'auto';
+      btnToggleDraw.textContent = '✏️ 註記模式：開';
+      btnToggleDraw.style.background = 'rgba(56, 189, 248, 0.15)';
+      btnToggleDraw.style.color = '#38bdf8';
+      btnToggleDraw.style.borderColor = '#38bdf8';
+    } else {
+      annotationCanvas.style.pointerEvents = 'none';
+      btnToggleDraw.textContent = '註記模式：關';
+      btnToggleDraw.style.background = 'rgba(255, 255, 255, 0.1)';
+      btnToggleDraw.style.color = '#94a3b8';
+      btnToggleDraw.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    }
+  });
+
+  // 清除畫布
+  btnClearDraw.addEventListener('click', () => {
+    drawCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+  });
+
+  // 滑鼠繪圖事件處理
+  function startDrawing(x, y) {
+    if (!isDrawMode) return;
+    isDrawing = true;
+    drawCtx.beginPath();
+    drawCtx.moveTo(x, y);
+  }
+
+  function draw(x, y) {
+    if (!isDrawing || !isDrawMode) return;
+    drawCtx.lineTo(x, y);
+    drawCtx.stroke();
+  }
+
+  function stopDrawing() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    drawCtx.closePath();
+  }
+
+  // 滑鼠事件
+  annotationCanvas.addEventListener('mousedown', (e) => startDrawing(e.clientX, e.clientY));
+  annotationCanvas.addEventListener('mousemove', (e) => draw(e.clientX, e.clientY));
+  annotationCanvas.addEventListener('mouseup', stopDrawing);
+  annotationCanvas.addEventListener('mouseleave', stopDrawing);
+
+  // 觸控設備支援 (平板/手機)
+  annotationCanvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      startDrawing(touch.clientX, touch.clientY);
+    }
+  });
+  annotationCanvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      draw(touch.clientX, touch.clientY);
+    }
+  });
+  annotationCanvas.addEventListener('touchend', stopDrawing);
 
   // 初始化執行
   renderTable();

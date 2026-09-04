@@ -56,6 +56,27 @@
         .btn-add:hover {
             background-color: #007399;
         }
+        .btn-draw {
+            background-color: #ff9800;
+        }
+        .btn-draw.active {
+            background-color: #e74c3c;
+        }
+        .btn-clear {
+            background-color: #7f8c8d;
+        }
+        .btn-clear:hover {
+            background-color: #636e72;
+        }
+        .color-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+            cursor: pointer;
+            padding: 0;
+        }
         .hint {
             width: 100%;
             font-size: 14px;
@@ -104,6 +125,15 @@
             border-bottom: 2px solid white;
             overflow: hidden;
             box-sizing: border-box;
+        }
+        
+        /* 畫布手繪層 */
+        #drawCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 15;
+            pointer-events: none; /* 預設不攔截滑鼠，讓月亮可被拖曳 */
         }
         
         /* 網格線 */
@@ -183,7 +213,6 @@
 </head>
 <body>
 
-    <!-- 控制面板 -->
     <div class="controls">
         <div class="input-group">
             <label>日期:</label>
@@ -201,6 +230,19 @@
             <label>記錄者:</label>
             <input type="text" id="nameInput" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
         </div>
+        
+        <div class="input-group" style="border-left: 2px solid #eee; padding-left: 10px;">
+            <button id="drawToggleBtn" class="btn-draw" onclick="toggleDrawMode()">✏️ 啟用畫筆</button>
+            <button class="btn-clear" onclick="clearCanvas()">🧹 清除註記</button>
+            <label style="margin-left:5px;">顏色:</label>
+            <button class="color-btn" style="background:#ff4d4d;" onclick="setPenColor('#ff4d4d')"></button>
+            <button class="color-btn" style="background:#ffeb3b;" onclick="setPenColor('#ffeb3b')"></button>
+            <button class="color-btn" style="background:#00e5ff;" onclick="setPenColor('#00e5ff')"></button>
+            <button class="color-btn" style="background:#76ff03;" onclick="setPenColor('#76ff03')"></button>
+            <button class="color-btn" style="background:#ffffff;" onclick="setPenColor('#ffffff')"></button>
+            <input type="color" id="customColorPicker" value="#ff4d4d" onchange="setPenColor(this.value)" style="width:30px; height:30px; padding:0; cursor:pointer;" title="自訂顏色">
+        </div>
+
         <div class="input-group" style="margin-left: auto;">
             <select id="phaseSelect">
                 <option value="🌕">🌕 滿月 (望)</option>
@@ -215,10 +257,9 @@
             <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
         </div>
         <button onclick="exportToImage()">📥 匯出成圖檔</button>
-        <div class="hint">💡 提示：月亮可隨意拖曳至記錄表中任何位置；對著月亮「點擊兩下 (雙擊)」可將其刪除。</div>
+        <div class="hint">💡 提示：開啟畫筆模式即可在圖表上手繪軌跡；關閉畫筆後可繼續拖曳月亮或雙擊刪除月亮。</div>
     </div>
 
-    <!-- 匯出畫布區 -->
     <div id="export-area">
         <h2>月亮高度角與方位角觀測記錄</h2>
         <div class="record-info">
@@ -231,10 +272,11 @@
         <div class="chart-wrapper">
             <div id="y-axis-labels"></div>
             <div class="chart-container" id="chart">
+                <canvas id="drawCanvas" width="800" height="540"></canvas>
+                
                 <div class="landscape">
                     <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                 </div>
-                <!-- 預設月亮 -->
                 <div class="moon" style="left: 0px; top: 540px;">🌕</div>
             </div>
             <div id="x-axis-labels"></div>
@@ -319,6 +361,7 @@
         let isDragging = false;
 
         document.addEventListener('mousedown', (e) => {
+            if (isDrawMode) return; // 繪圖模式下關閉月亮拖曳
             if (e.target.classList.contains('moon')) {
                 isDragging = true;
                 activeMoon = e.target;
@@ -327,12 +370,11 @@
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (!isDragging || !activeMoon) return;
+            if (!isDragging || !activeMoon || isDrawMode) return;
             const rect = chart.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
 
-            // 限制月亮不超出圖表範圍
             x = Math.max(0, Math.min(x, chartWidth));
             y = Math.max(0, Math.min(y, chartHeight));
 
@@ -342,7 +384,6 @@
 
         document.addEventListener('mouseup', (e) => {
             if (isDragging && activeMoon) {
-                // 放開滑鼠時直接停留在當前位置，不進行網格對齊
                 isDragging = false;
                 activeMoon = null;
             }
@@ -350,10 +391,63 @@
 
         // 雙擊刪除
         document.addEventListener('dblclick', (e) => {
-            if (e.target.classList.contains('moon')) {
+            if (!isDrawMode && e.target.classList.contains('moon')) {
                 e.target.remove();
             }
         });
+
+        /* --- 手繪註記繪圖邏輯 --- */
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let isDrawMode = false;
+        let currentColor = '#ff4d4d';
+        const lineThickness = 5; // 線條粗細設定
+
+        function toggleDrawMode() {
+            isDrawMode = !isDrawMode;
+            const btn = document.getElementById('drawToggleBtn');
+            if (isDrawMode) {
+                btn.innerText = '🛑 關閉畫筆';
+                btn.classList.add('active');
+                canvas.style.pointerEvents = 'auto'; // 開啟畫筆時可接受滑鼠繪圖
+            } else {
+                btn.innerText = '✏️ 啟用畫筆';
+                btn.classList.remove('active');
+                canvas.style.pointerEvents = 'none'; // 關閉時允許穿透操作月亮
+            }
+        }
+
+        function setPenColor(color) {
+            currentColor = color;
+            document.getElementById('customColorPicker').value = color;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!isDrawMode) return;
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !isDrawMode) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = lineThickness;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        });
+
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', () => isDrawing = false);
 
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
