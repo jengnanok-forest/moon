@@ -22,8 +22,8 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            width: 900px;
-            max-width: 100%;
+            width: 100%;
+            max-width: 900px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -144,7 +144,8 @@
         
         /* 記錄表主體區塊 */
         #export-area-wrapper {
-            max-width: 100%;
+            width: 100%;
+            max-width: 900px;
             overflow-x: auto;
         }
         #export-area {
@@ -152,7 +153,8 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 900px;
+            width: 100%;
+            min-width: 850px;
             box-sizing: border-box;
             overflow: visible;
         }
@@ -170,7 +172,7 @@
             color: #2c3e50;
         }
 
-        /* 3 列 6 欄觀測表格 (時間、高度角、方位) */
+        /* 觀測表格 */
         .obs-table {
             width: 100%;
             border-collapse: collapse;
@@ -201,7 +203,6 @@
             margin: 50px auto 50px 50px;
         }
         
-        /* 圖表區塊設定 */
         .chart-container {
             position: relative;
             width: 100%;
@@ -213,7 +214,6 @@
             overflow: visible;
         }
 
-        /* 繪圖 Canvas */
         #drawingCanvas {
             position: absolute;
             top: 0;
@@ -227,7 +227,6 @@
             cursor: crosshair;
         }
         
-        /* 網格線 */
         .grid-line-x, .grid-line-y {
             position: absolute;
             background-color: rgba(255, 255, 255, 0.2);
@@ -236,7 +235,6 @@
         .grid-line-x { width: 1px; height: 100%; }
         .grid-line-y { width: 100%; height: 1px; }
         
-        /* 縱軸標籤 */
         #y-axis-labels {
             position: absolute;
             left: -45px;
@@ -255,7 +253,6 @@
             transform: translateY(-50%);
         }
 
-        /* 橫軸標籤 */
         #x-axis-labels {
             position: absolute;
             bottom: -35px;
@@ -272,7 +269,6 @@
             transform: translateX(-50%);
         }
 
-        /* 背景地景 */
         .landscape {
             position: absolute;
             bottom: -5px;
@@ -286,7 +282,6 @@
             user-select: none;
         }
 
-        /* 月亮物件容器 */
         .moon-item {
             position: absolute;
             width: 62px;
@@ -297,7 +292,6 @@
             z-index: 20;
         }
 
-        /* 月亮上方的時間框 */
         .moon-time {
             width: 62px;
             height: 22px;
@@ -323,7 +317,6 @@
             border-color: #008CBA;
         }
 
-        /* 月亮圖示 */
         .moon-icon {
             font-size: 35px;
             line-height: 35px;
@@ -339,9 +332,7 @@
 </head>
 <body>
 
-    <!-- 控制面板 -->
     <div class="controls">
-        <!-- 第一排：日期、時間、地點 -->
         <div class="control-row">
             <div class="input-group">
                 <label>日期:</label>
@@ -357,7 +348,6 @@
             </div>
         </div>
 
-        <!-- 第二排：記錄者、畫筆控制區、顏色選擇區 -->
         <div class="control-row">
             <div class="input-group">
                 <label>記錄者:</label>
@@ -377,7 +367,6 @@
             </div>
         </div>
 
-        <!-- 第三排：隨機數據按鈕、月亮選擇與功能鈕 -->
         <div class="control-row row-right">
             <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
             <select id="phaseSelect">
@@ -394,11 +383,9 @@
             <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
         </div>
 
-        <!-- 第四排：提示訊息 -->
         <div class="hint">💡 提示：點擊「🎲 重新產生數據」；啟用畫筆可在圖上手繪軌跡，關閉畫筆後可拖曳月亮或雙擊刪除月亮。</div>
     </div>
 
-    <!-- 匯出畫布區外層容器 -->
     <div id="export-area-wrapper">
         <div id="export-area">
             <h2>月亮高度角與方位角觀測記錄</h2>
@@ -408,7 +395,6 @@
                 <span id="dispName">記錄者: ____________</span>
             </div>
 
-            <!-- 3 列 6 欄觀測表格 -->
             <table class="obs-table">
                 <tr id="timeRow">
                     <td class="table-header">時間</td>
@@ -439,13 +425,10 @@
             <div class="chart-wrapper">
                 <div id="y-axis-labels"></div>
                 <div class="chart-container" id="chart">
-                    <!-- 手繪註記 Canvas -->
                     <canvas id="drawingCanvas" width="800" height="540"></canvas>
-
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                     </div>
-                    <!-- 預設月亮與時間框 -->
                     <div class="moon-item" style="left: -31px; top: 499px;">
                         <input type="text" class="moon-time" placeholder="時間" value="18:00">
                         <div class="moon-icon">🌕</div>
@@ -471,6 +454,14 @@
             const chart = document.getElementById('chart');
             const yLabels = document.getElementById('y-axis-labels');
             const xLabels = document.getElementById('x-axis-labels');
+
+            if (!chart || !yLabels || !xLabels) return;
+            
+            yLabels.innerHTML = '';
+            xLabels.innerHTML = '';
+            
+            const existingGrid = chart.querySelectorAll('.grid-line-x, .grid-line-y');
+            existingGrid.forEach(el => el.remove());
 
             for (let i = 0; i <= ySteps; i++) {
                 let degree = i * 5;
@@ -508,7 +499,6 @@
             }
         }
 
-        /* 隨機數據生成邏輯：高度角限定取自 [10, 15, 20, ..., 90] */
         function generateRandomData() {
             const timeCells = document.querySelectorAll('.time-cell');
             const altCells = document.querySelectorAll('.alt-cell');
@@ -516,13 +506,12 @@
             
             if (timeCells.length < 5 || altCells.length < 5 || dirCells.length < 5) return;
 
-            // 1. 產生 17:00 ~ 23:00 嚴格遞增觀測時間
             const timeIntervals = [
-                [1020, 1080], // 17:00 ~ 18:00
-                [1095, 1155], // 18:15 ~ 19:15
-                [1170, 1230], // 19:30 ~ 20:30
-                [1245, 1305], // 20:45 ~ 21:45
-                [1320, 1380]  // 22:00 ~ 23:00
+                [1020, 1080],
+                [1095, 1155],
+                [1170, 1230],
+                [1245, 1305],
+                [1320, 1380]
             ];
 
             const times = timeIntervals.map(range => {
@@ -534,17 +523,11 @@
                 return `${hStr}:${mStr}`;
             });
 
-            // 2. 限定高度角可選值的集合 (10 到 90，步長 5)
             const validAlts = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90];
 
-            // 正南方 (南) 接近 90°，在 index 12 ~ 16 (即 70°, 75°, 80°, 85°, 90°) 中隨機選取
             let southIdx = Math.floor(Math.random() * 5) + 12;
-
-            // 東南與西南：較正南方低 3 ~ 5 個階梯 (低 15° ~ 25°)
             let seIdx = Math.max(2, southIdx - (Math.floor(Math.random() * 3) + 3));
             let swIdx = Math.max(2, southIdx - (Math.floor(Math.random() * 3) + 3));
-
-            // 東與西：較東南/西南再低 2 ~ 4 個階梯，最低不小於 index 0 (10°)
             let eIdx = Math.max(0, seIdx - (Math.floor(Math.random() * 3) + 2));
             let wIdx = Math.max(0, swIdx - (Math.floor(Math.random() * 3) + 2));
 
@@ -558,7 +541,6 @@
 
             const defaultDirs = ['東', '東南', '南', '西南', '西'];
 
-            // 3. 寫入表格
             for (let i = 0; i < 5; i++) {
                 timeCells[i].innerText = times[i];
                 altCells[i].innerText = altitudes[i] + '°';
@@ -595,7 +577,6 @@
             chart.appendChild(moonItem);
         }
 
-        /* ----- 月亮拖曳邏輯 ----- */
         const chart = document.getElementById('chart');
         let activeMoonItem = null;
         let isDragging = false;
@@ -641,7 +622,6 @@
             }
         });
 
-        /* ----- 手繪註記邏輯 ----- */
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isPenActive = false;
@@ -717,7 +697,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        /* ----- 圖檔匯出邏輯 ----- */
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
             const wrapper = document.getElementById('export-area-wrapper');
@@ -770,10 +749,17 @@
             });
         }
 
-        window.onload = () => {
+        /* 雙重保險初始化邏輯：支援嵌入式 iframe/右側預覽視窗與獨立網頁 */
+        function initApp() {
             initGrid();
             generateRandomData();
-        };
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initApp();
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
     </script>
 </body>
 </html>
