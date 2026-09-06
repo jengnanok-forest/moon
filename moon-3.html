@@ -65,6 +65,17 @@
             align-items: center;
             gap: 4px;
         }
+        .btn-rand {
+            background-color: #8e44ad;
+            color: white;
+            box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3);
+        }
+        .btn-rand:hover {
+            background-color: #732d91;
+        }
+        .btn-rand:active {
+            transform: translateY(1px);
+        }
         .btn-pen {
             background-color: #f39c12;
             color: white;
@@ -148,7 +159,7 @@
         .record-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-size: 18px;
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
@@ -158,8 +169,31 @@
             margin-top: 0;
             color: #2c3e50;
         }
-        
-        /* 圖表區域外框（上方保留足夠邊界容納月亮時間框） */
+
+        /* 3 列 6 欄觀測表格 (時間、高度角、方位) */
+        .obs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            background-color: #ffffff;
+        }
+        .obs-table td {
+            border: 1.5px solid #000000;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 18px;
+            color: #000000;
+            width: 16.66%;
+            box-sizing: border-box;
+            height: 42px;
+        }
+        .obs-table .table-header {
+            font-weight: bold;
+            background-color: #ffffff;
+            letter-spacing: 2px;
+        }
+
+        /* 圖表區域外框 */
         .chart-wrapper {
             position: relative;
             width: 800px;
@@ -252,7 +286,7 @@
             user-select: none;
         }
 
-        /* 月亮物件容器 (寬度固定 62px，不使用 transform 避免渲染誤差) */
+        /* 月亮物件容器 */
         .moon-item {
             position: absolute;
             width: 62px;
@@ -263,7 +297,7 @@
             z-index: 20;
         }
 
-        /* 月亮上方的時間框 (使用標準 block + line-height 置中，防止文字被切半) */
+        /* 月亮上方的時間框 */
         .moon-time {
             width: 62px;
             height: 22px;
@@ -343,8 +377,9 @@
             </div>
         </div>
 
-        <!-- 第三排：月亮種類、新增月亮、匯出圖檔 -->
+        <!-- 第三排：隨機數據按鈕、月亮選擇與功能鈕 -->
         <div class="control-row row-right">
+            <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
             <select id="phaseSelect">
                 <option value="🌕">🌕 滿月 (望)</option>
                 <option value="🌖">🌖 虧凸月</option>
@@ -360,7 +395,7 @@
         </div>
 
         <!-- 第四排：提示訊息 -->
-        <div class="hint">💡 提示：開啟畫筆模式即可在圖表上手繪軌跡；關閉畫筆後可繼續拖曳月亮或雙擊刪除月亮。</div>
+        <div class="hint">💡 提示：點擊「🎲 重新產生數據」；啟用畫筆可在圖上手繪軌跡，關閉畫筆後可拖曳月亮或雙擊刪除月亮。</div>
     </div>
 
     <!-- 匯出畫布區外層容器 -->
@@ -372,6 +407,34 @@
                 <span id="dispLoc">地點: ____________</span>
                 <span id="dispName">記錄者: ____________</span>
             </div>
+
+            <!-- 3 列 6 欄觀測表格 -->
+            <table class="obs-table">
+                <tr id="timeRow">
+                    <td class="table-header">時間</td>
+                    <td class="time-cell">--:--</td>
+                    <td class="time-cell">--:--</td>
+                    <td class="time-cell">--:--</td>
+                    <td class="time-cell">--:--</td>
+                    <td class="time-cell">--:--</td>
+                </tr>
+                <tr id="altRow">
+                    <td class="table-header">高度角</td>
+                    <td class="alt-cell">--°</td>
+                    <td class="alt-cell">--°</td>
+                    <td class="alt-cell">--°</td>
+                    <td class="alt-cell">--°</td>
+                    <td class="alt-cell">--°</td>
+                </tr>
+                <tr id="dirRow">
+                    <td class="table-header">方位</td>
+                    <td class="dir-cell">--</td>
+                    <td class="dir-cell">--</td>
+                    <td class="dir-cell">--</td>
+                    <td class="dir-cell">--</td>
+                    <td class="dir-cell">--</td>
+                </tr>
+            </table>
             
             <div class="chart-wrapper">
                 <div id="y-axis-labels"></div>
@@ -382,7 +445,7 @@
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                     </div>
-                    <!-- 預設月亮與時間框 (中心對齊 X:0, Y:540) -->
+                    <!-- 預設月亮與時間框 -->
                     <div class="moon-item" style="left: -31px; top: 499px;">
                         <input type="text" class="moon-time" placeholder="時間" value="18:00">
                         <div class="moon-icon">🌕</div>
@@ -445,6 +508,64 @@
             }
         }
 
+        /* 隨機數據生成邏輯：高度角限定取自 [10, 15, 20, ..., 90] */
+        function generateRandomData() {
+            const timeCells = document.querySelectorAll('.time-cell');
+            const altCells = document.querySelectorAll('.alt-cell');
+            const dirCells = document.querySelectorAll('.dir-cell');
+            
+            if (timeCells.length < 5 || altCells.length < 5 || dirCells.length < 5) return;
+
+            // 1. 產生 17:00 ~ 23:00 嚴格遞增觀測時間
+            const timeIntervals = [
+                [1020, 1080], // 17:00 ~ 18:00
+                [1095, 1155], // 18:15 ~ 19:15
+                [1170, 1230], // 19:30 ~ 20:30
+                [1245, 1305], // 20:45 ~ 21:45
+                [1320, 1380]  // 22:00 ~ 23:00
+            ];
+
+            const times = timeIntervals.map(range => {
+                let totalMin = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+                let hours = Math.floor(totalMin / 60);
+                let mins = totalMin % 60;
+                let hStr = hours < 10 ? '0' + hours : '' + hours;
+                let mStr = mins < 10 ? '0' + mins : '' + mins;
+                return `${hStr}:${mStr}`;
+            });
+
+            // 2. 限定高度角可選值的集合 (10 到 90，步長 5)
+            const validAlts = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90];
+
+            // 正南方 (南) 接近 90°，在 index 12 ~ 16 (即 70°, 75°, 80°, 85°, 90°) 中隨機選取
+            let southIdx = Math.floor(Math.random() * 5) + 12;
+
+            // 東南與西南：較正南方低 3 ~ 5 個階梯 (低 15° ~ 25°)
+            let seIdx = Math.max(2, southIdx - (Math.floor(Math.random() * 3) + 3));
+            let swIdx = Math.max(2, southIdx - (Math.floor(Math.random() * 3) + 3));
+
+            // 東與西：較東南/西南再低 2 ~ 4 個階梯，最低不小於 index 0 (10°)
+            let eIdx = Math.max(0, seIdx - (Math.floor(Math.random() * 3) + 2));
+            let wIdx = Math.max(0, swIdx - (Math.floor(Math.random() * 3) + 2));
+
+            const altitudes = [
+                validAlts[eIdx],
+                validAlts[seIdx],
+                validAlts[southIdx],
+                validAlts[swIdx],
+                validAlts[wIdx]
+            ];
+
+            const defaultDirs = ['東', '東南', '南', '西南', '西'];
+
+            // 3. 寫入表格
+            for (let i = 0; i < 5; i++) {
+                timeCells[i].innerText = times[i];
+                altCells[i].innerText = altitudes[i] + '°';
+                dirCells[i].innerText = defaultDirs[i];
+            }
+        }
+
         function updateInfo() {
             document.getElementById('dispDate').innerText = '日期: ' + (document.getElementById('dateInput').value || '____________');
             document.getElementById('dispLoc').innerText = '地點: ' + (document.getElementById('locInput').value || '____________');
@@ -457,7 +578,6 @@
 
             const moonItem = document.createElement('div');
             moonItem.className = 'moon-item';
-            // 將月亮中心對齊至初始座標 (0, 540)
             moonItem.style.left = '-31px';
             moonItem.style.top = '499px';
 
@@ -501,7 +621,6 @@
             x = Math.max(0, Math.min(x, chartWidth));
             y = Math.max(0, Math.min(y, chartHeight));
 
-            // 精確計算偏移量：X軸減 31px（寬度的一半），Y軸減 41px（時間框+間距+圖示中心點）
             activeMoonItem.style.left = (x - 31) + 'px';
             activeMoonItem.style.top = (y - 41) + 'px';
         });
@@ -598,12 +717,11 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        /* ----- 圖檔匯出邏輯（修復分割視窗截圖基線偏離） ----- */
+        /* ----- 圖檔匯出邏輯 ----- */
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
             const wrapper = document.getElementById('export-area-wrapper');
             
-            // 暫存並歸零捲軸，確保分割視窗下擷取不位移
             const originalScrollLeft = wrapper.scrollLeft;
             wrapper.scrollLeft = 0;
 
@@ -621,7 +739,6 @@
                     const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
                     if (clonedWrapper) clonedWrapper.scrollLeft = 0;
 
-                    // 將 input 轉換為 div，採用標準 block + line-height 置中
                     const timeInputs = clonedDoc.querySelectorAll('input.moon-time');
                     timeInputs.forEach(input => {
                         const textDiv = clonedDoc.createElement('div');
@@ -655,6 +772,7 @@
 
         window.onload = () => {
             initGrid();
+            generateRandomData();
         };
     </script>
 </body>
