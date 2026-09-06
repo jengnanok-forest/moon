@@ -24,66 +24,111 @@
             width: 900px;
             box-sizing: border-box;
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .control-row {
+            display: flex;
             align-items: center;
+            gap: 12px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .row-right {
+            justify-content: flex-end;
         }
         .input-group {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+        }
+        .v-divider {
+            width: 1px;
+            height: 26px;
+            background-color: #ddd;
+            margin: 0 4px;
         }
         input, select, button {
-            padding: 8px;
+            padding: 8px 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 15px;
         }
         button {
-            background-color: #4CAF50;
-            color: white;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: background-color 0.2s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        button:hover {
-            background-color: #45a049;
+        .btn-pen {
+            background-color: #f39c12;
+            color: white;
+        }
+        .btn-pen.active {
+            background-color: #d35400;
+        }
+        .btn-pen:hover {
+            opacity: 0.9;
+        }
+        .btn-clear-draw {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-clear-draw:hover {
+            background-color: #5a6268;
         }
         .btn-add {
             background-color: #008CBA;
+            color: white;
         }
         .btn-add:hover {
             background-color: #007399;
         }
-        .btn-draw {
-            background-color: #ff9800;
+        .btn-export {
+            background-color: #4CAF50;
+            color: white;
         }
-        .btn-draw.active {
-            background-color: #e74c3c;
+        .btn-export:hover {
+            background-color: #45a049;
         }
-        .btn-clear {
-            background-color: #7f8c8d;
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .btn-clear:hover {
-            background-color: #636e72;
+        .color-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #ccc;
+            transition: transform 0.1s;
         }
-        .color-btn {
+        .color-dot:hover {
+            transform: scale(1.15);
+        }
+        input[type="color"] {
+            padding: 0;
             width: 28px;
             height: 28px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+            border: 2px solid #aaa;
+            border-radius: 4px;
             cursor: pointer;
-            padding: 0;
+            background: none;
         }
         .hint {
             width: 100%;
             font-size: 14px;
             color: #d9534f;
             font-weight: bold;
-            margin-top: -5px;
+            margin-top: 2px;
         }
+        
         /* 記錄表主體區塊 */
         #export-area {
             background: white;
@@ -126,14 +171,19 @@
             overflow: hidden;
             box-sizing: border-box;
         }
-        
-        /* 畫布手繪層 */
-        #drawCanvas {
+
+        /* 繪圖 Canvas */
+        #drawingCanvas {
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #drawingCanvas.active-draw {
             z-index: 15;
-            pointer-events: none; /* 預設不攔截滑鼠，讓月亮可被拖曳 */
+            pointer-events: auto;
+            cursor: crosshair;
         }
         
         /* 網格線 */
@@ -192,58 +242,91 @@
             user-select: none;
         }
 
-        /* 可拖曳的月亮 */
-        .moon {
+        /* 月亮物件容器 */
+        .moon-item {
             position: absolute;
-            width: 40px;
-            height: 40px;
-            font-size: 35px;
-            line-height: 40px;
-            text-align: center;
-            cursor: grab;
-            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translate(-50%, -38px);
             user-select: none;
             z-index: 10;
+        }
+
+        /* 月亮上方的時間輸入框 */
+        .moon-time {
+            width: 60px;
+            padding: 2px 4px;
+            font-size: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c3e50;
+            font-weight: bold;
+            outline: none;
+            margin-bottom: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .moon-time:focus {
+            background: #ffffff;
+            border-color: #008CBA;
+        }
+
+        /* 月亮圖示 */
+        .moon-icon {
+            font-size: 35px;
+            line-height: 35px;
+            cursor: grab;
             text-shadow: 0 0 15px rgba(255,255,255,0.8);
         }
-        .moon:active {
+        .moon-icon:active {
             cursor: grabbing;
         }
     </style>
 </head>
 <body>
 
+    <!-- 控制面板 -->
     <div class="controls">
-        <div class="input-group">
-            <label>日期:</label>
-            <input type="date" id="dateInput" onchange="updateInfo()">
-        </div>
-        <div class="input-group">
-            <label>時間:</label>
-            <input type="time" id="timeInput" onchange="updateInfo()">
-        </div>
-        <div class="input-group">
-            <label>地點:</label>
-            <input type="text" id="locInput" placeholder="例如: 學校操場" onchange="updateInfo()" onkeyup="updateInfo()">
-        </div>
-        <div class="input-group">
-            <label>記錄者:</label>
-            <input type="text" id="nameInput" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
-        </div>
-        
-        <div class="input-group" style="border-left: 2px solid #eee; padding-left: 10px;">
-            <button id="drawToggleBtn" class="btn-draw" onclick="toggleDrawMode()">✏️ 啟用畫筆</button>
-            <button class="btn-clear" onclick="clearCanvas()">🧹 清除註記</button>
-            <label style="margin-left:5px;">顏色:</label>
-            <button class="color-btn" style="background:#ff4d4d;" onclick="setPenColor('#ff4d4d')"></button>
-            <button class="color-btn" style="background:#ffeb3b;" onclick="setPenColor('#ffeb3b')"></button>
-            <button class="color-btn" style="background:#00e5ff;" onclick="setPenColor('#00e5ff')"></button>
-            <button class="color-btn" style="background:#76ff03;" onclick="setPenColor('#76ff03')"></button>
-            <button class="color-btn" style="background:#ffffff;" onclick="setPenColor('#ffffff')"></button>
-            <input type="color" id="customColorPicker" value="#ff4d4d" onchange="setPenColor(this.value)" style="width:30px; height:30px; padding:0; cursor:pointer;" title="自訂顏色">
+        <!-- 第一排：日期、時間、地點 -->
+        <div class="control-row">
+            <div class="input-group">
+                <label>日期:</label>
+                <input type="date" id="dateInput" onchange="updateInfo()">
+            </div>
+            <div class="input-group">
+                <label>時間:</label>
+                <input type="time" id="timeInput">
+            </div>
+            <div class="input-group">
+                <label>地點:</label>
+                <input type="text" id="locInput" placeholder="例如: 學校操場" onchange="updateInfo()" onkeyup="updateInfo()">
+            </div>
         </div>
 
-        <div class="input-group" style="margin-left: auto;">
+        <!-- 第二排：記錄者、畫筆控制區、顏色選擇區 -->
+        <div class="control-row">
+            <div class="input-group">
+                <label>記錄者:</label>
+                <input type="text" id="nameInput" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
+            </div>
+            <div class="v-divider"></div>
+            <button type="button" id="btnTogglePen" class="btn-pen" onclick="togglePen()">✏️ 啟用畫筆</button>
+            <button type="button" class="btn-clear-draw" onclick="clearCanvas()">🧹 清除註記</button>
+            <div class="color-picker-group">
+                <label>顏色:</label>
+                <span class="color-dot" style="background:#ff3b30;" onclick="setColor('#ff3b30')"></span>
+                <span class="color-dot" style="background:#ffcc00;" onclick="setColor('#ffcc00')"></span>
+                <span class="color-dot" style="background:#00d4ff;" onclick="setColor('#00d4ff')"></span>
+                <span class="color-dot" style="background:#76ff03;" onclick="setColor('#76ff03')"></span>
+                <span class="color-dot" style="background:#ffffff;" onclick="setColor('#ffffff')"></span>
+                <input type="color" id="drawColor" value="#ff3b30" onchange="setColor(this.value)">
+            </div>
+        </div>
+
+        <!-- 第三排：月亮種類、新增月亮、匯出圖檔 -->
+        <div class="control-row row-right">
             <select id="phaseSelect">
                 <option value="🌕">🌕 滿月 (望)</option>
                 <option value="🌖">🌖 虧凸月</option>
@@ -255,16 +338,18 @@
                 <option value="🌔">🌔 盈凸月</option>
             </select>
             <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
+            <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
         </div>
-        <button onclick="exportToImage()">📥 匯出成圖檔</button>
+
+        <!-- 第四排：提示訊息 -->
         <div class="hint">💡 提示：開啟畫筆模式即可在圖表上手繪軌跡；關閉畫筆後可繼續拖曳月亮或雙擊刪除月亮。</div>
     </div>
 
+    <!-- 匯出畫布區 -->
     <div id="export-area">
         <h2>月亮高度角與方位角觀測記錄</h2>
         <div class="record-info">
             <span id="dispDate">日期: ____________</span>
-            <span id="dispTime">時間: ____________</span>
             <span id="dispLoc">地點: ____________</span>
             <span id="dispName">記錄者: ____________</span>
         </div>
@@ -272,12 +357,17 @@
         <div class="chart-wrapper">
             <div id="y-axis-labels"></div>
             <div class="chart-container" id="chart">
-                <canvas id="drawCanvas" width="800" height="540"></canvas>
-                
+                <!-- 手繪註記 Canvas -->
+                <canvas id="drawingCanvas" width="800" height="540"></canvas>
+
                 <div class="landscape">
                     <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                 </div>
-                <div class="moon" style="left: 0px; top: 540px;">🌕</div>
+                <!-- 預設月亮與時間框 -->
+                <div class="moon-item" style="left: 0px; top: 540px;">
+                    <input type="text" class="moon-time" placeholder="時間" value="18:00">
+                    <div class="moon-icon">🌕</div>
+                </div>
             </div>
             <div id="x-axis-labels"></div>
         </div>
@@ -299,7 +389,6 @@
             const yLabels = document.getElementById('y-axis-labels');
             const xLabels = document.getElementById('x-axis-labels');
 
-            // 產生Y軸 (高度角 0-90度)
             for (let i = 0; i <= ySteps; i++) {
                 let degree = i * 5;
                 let topPos = chartHeight - (i * yStepSize);
@@ -318,7 +407,6 @@
                 yLabels.appendChild(label);
             }
 
-            // 產生X軸 (方位角)
             for (let i = 0; i <= xSteps; i++) {
                 let leftPos = i * xStepSize;
 
@@ -339,7 +427,6 @@
 
         function updateInfo() {
             document.getElementById('dispDate').innerText = '日期: ' + (document.getElementById('dateInput').value || '____________');
-            document.getElementById('dispTime').innerText = '時間: ' + (document.getElementById('timeInput').value || '____________');
             document.getElementById('dispLoc').innerText = '地點: ' + (document.getElementById('locInput').value || '____________');
             document.getElementById('dispName').innerText = '記錄者: ' + (document.getElementById('nameInput').value || '____________');
         }
@@ -347,30 +434,45 @@
         function addMoon() {
             const phase = document.getElementById('phaseSelect').value;
             const chart = document.getElementById('chart');
-            const newMoon = document.createElement('div');
-            newMoon.className = 'moon';
-            newMoon.innerText = phase;
-            newMoon.style.left = '0px';
-            newMoon.style.top = '540px';
-            chart.appendChild(newMoon);
+
+            const moonItem = document.createElement('div');
+            moonItem.className = 'moon-item';
+            moonItem.style.left = '0px';
+            moonItem.style.top = '540px';
+
+            const timeInput = document.createElement('input');
+            timeInput.type = 'text';
+            timeInput.className = 'moon-time';
+            timeInput.placeholder = '時間';
+
+            const moonIcon = document.createElement('div');
+            moonIcon.className = 'moon-icon';
+            moonIcon.innerText = phase;
+
+            moonItem.appendChild(timeInput);
+            moonItem.appendChild(moonIcon);
+            chart.appendChild(moonItem);
         }
 
-        // 自由拖曳邏輯 (取消網格吸附)
+        /* ----- 月亮拖曳邏輯 ----- */
         const chart = document.getElementById('chart');
-        let activeMoon = null;
+        let activeMoonItem = null;
         let isDragging = false;
 
         document.addEventListener('mousedown', (e) => {
-            if (isDrawMode) return; // 繪圖模式下關閉月亮拖曳
-            if (e.target.classList.contains('moon')) {
+            if (isPenActive) return;
+            if (e.target.tagName === 'INPUT') return;
+
+            const item = e.target.closest('.moon-item');
+            if (item) {
                 isDragging = true;
-                activeMoon = e.target;
+                activeMoonItem = item;
                 e.preventDefault(); 
             }
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (!isDragging || !activeMoon || isDrawMode) return;
+            if (!isDragging || !activeMoonItem || isPenActive) return;
             const rect = chart.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
@@ -378,80 +480,106 @@
             x = Math.max(0, Math.min(x, chartWidth));
             y = Math.max(0, Math.min(y, chartHeight));
 
-            activeMoon.style.left = x + 'px';
-            activeMoon.style.top = y + 'px';
+            activeMoonItem.style.left = x + 'px';
+            activeMoonItem.style.top = y + 'px';
         });
 
-        document.addEventListener('mouseup', (e) => {
-            if (isDragging && activeMoon) {
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
                 isDragging = false;
-                activeMoon = null;
+                activeMoonItem = null;
             }
         });
 
-        // 雙擊刪除
         document.addEventListener('dblclick', (e) => {
-            if (!isDrawMode && e.target.classList.contains('moon')) {
-                e.target.remove();
+            if (isPenActive || e.target.tagName === 'INPUT') return;
+
+            const item = e.target.closest('.moon-item');
+            if (item) {
+                item.remove();
             }
         });
 
-        /* --- 手繪註記繪圖邏輯 --- */
-        const canvas = document.getElementById('drawCanvas');
+        /* ----- 手繪註記邏輯 ----- */
+        const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
+        let isPenActive = false;
         let isDrawing = false;
-        let isDrawMode = false;
-        let currentColor = '#ff4d4d';
-        const lineThickness = 5; // 線條粗細設定
+        let currentColor = '#ff3b30';
+        const strokeWidth = 5;
 
-        function toggleDrawMode() {
-            isDrawMode = !isDrawMode;
-            const btn = document.getElementById('drawToggleBtn');
-            if (isDrawMode) {
-                btn.innerText = '🛑 關閉畫筆';
+        function togglePen() {
+            isPenActive = !isPenActive;
+            const btn = document.getElementById('btnTogglePen');
+
+            if (isPenActive) {
+                btn.innerText = '✏️ 停用畫筆';
                 btn.classList.add('active');
-                canvas.style.pointerEvents = 'auto'; // 開啟畫筆時可接受滑鼠繪圖
+                canvas.classList.add('active-draw');
             } else {
                 btn.innerText = '✏️ 啟用畫筆';
                 btn.classList.remove('active');
-                canvas.style.pointerEvents = 'none'; // 關閉時允許穿透操作月亮
+                canvas.classList.remove('active-draw');
             }
         }
 
-        function setPenColor(color) {
+        function setColor(color) {
             currentColor = color;
-            document.getElementById('customColorPicker').value = color;
+            document.getElementById('drawColor').value = color;
         }
+
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            if (!isPenActive) return;
+            isDrawing = true;
+            const pos = getCanvasPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function draw(e) {
+            if (!isDrawing || !isPenActive) return;
+            const pos = getCanvasPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.closePath();
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        canvas.addEventListener('touchstart', (e) => { startDrawing(e); e.preventDefault(); });
+        canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
+        window.addEventListener('touchend', stopDrawing);
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
-            if (!isDrawMode) return;
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing || !isDrawMode) return;
-            const rect = canvas.getBoundingClientRect();
-            ctx.strokeStyle = currentColor;
-            ctx.lineWidth = lineThickness;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-            ctx.stroke();
-        });
-
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseleave', () => isDrawing = false);
-
+        /* ----- 圖檔匯出邏輯 ----- */
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
-            const btn = document.querySelector('button[onclick="exportToImage()"]');
+            const btn = document.querySelector('.btn-export');
             const originalText = btn.innerText;
             btn.innerText = '處理中...';
 
