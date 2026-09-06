@@ -143,6 +143,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             width: 900px;
             box-sizing: border-box;
+            overflow: visible;
         }
         .record-info {
             display: flex;
@@ -158,12 +159,12 @@
             color: #2c3e50;
         }
         
-        /* 圖表區域外框 */
+        /* 圖表區域外框（上方保留足夠邊界容納月亮時間框） */
         .chart-wrapper {
             position: relative;
             width: 800px;
             height: 540px;
-            margin: 25px auto 50px 50px;
+            margin: 50px auto 50px 50px;
         }
         
         /* 圖表區塊設定 */
@@ -175,6 +176,7 @@
             border-left: 2px solid white;
             border-bottom: 2px solid white;
             box-sizing: border-box;
+            overflow: visible;
         }
 
         /* 繪圖 Canvas */
@@ -250,23 +252,24 @@
             user-select: none;
         }
 
-        /* 月亮物件容器 */
+        /* 月亮物件容器 (寬度固定 62px，不使用 transform 避免渲染誤差) */
         .moon-item {
             position: absolute;
+            width: 62px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transform: translate(-50%, -38px);
             user-select: none;
             z-index: 20;
         }
 
-        /* 月亮上方的時間框修復（確保高度與行高一致） */
+        /* 月亮上方的時間框 (使用標準 block + line-height 置中，防止文字被切半) */
         .moon-time {
             width: 62px;
             height: 22px;
             line-height: 20px;
             padding: 0;
+            margin: 0 0 2px 0;
             font-size: 12px;
             text-align: center;
             border: 1px solid rgba(0, 0, 0, 0.3);
@@ -275,14 +278,11 @@
             color: #2c3e50;
             font-weight: bold;
             outline: none;
-            margin-bottom: 2px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.4);
             position: relative;
             z-index: 21;
             box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
         }
         .moon-time:focus {
             background: #ffffff;
@@ -293,8 +293,10 @@
         .moon-icon {
             font-size: 35px;
             line-height: 35px;
+            height: 35px;
             cursor: grab;
             text-shadow: 0 0 15px rgba(255,255,255,0.8);
+            text-align: center;
         }
         .moon-icon:active {
             cursor: grabbing;
@@ -380,8 +382,8 @@
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                     </div>
-                    <!-- 預設月亮與時間框 -->
-                    <div class="moon-item" style="left: 0px; top: 540px;">
+                    <!-- 預設月亮與時間框 (中心對齊 X:0, Y:540) -->
+                    <div class="moon-item" style="left: -31px; top: 499px;">
                         <input type="text" class="moon-time" placeholder="時間" value="18:00">
                         <div class="moon-icon">🌕</div>
                     </div>
@@ -455,8 +457,9 @@
 
             const moonItem = document.createElement('div');
             moonItem.className = 'moon-item';
-            moonItem.style.left = '0px';
-            moonItem.style.top = '540px';
+            // 將月亮中心對齊至初始座標 (0, 540)
+            moonItem.style.left = '-31px';
+            moonItem.style.top = '499px';
 
             const timeInput = document.createElement('input');
             timeInput.type = 'text';
@@ -496,10 +499,11 @@
             let y = e.clientY - rect.top;
 
             x = Math.max(0, Math.min(x, chartWidth));
-            y = Math.max(30, Math.min(y, chartHeight));
+            y = Math.max(0, Math.min(y, chartHeight));
 
-            activeMoonItem.style.left = x + 'px';
-            activeMoonItem.style.top = y + 'px';
+            // 精確計算偏移量：X軸減 31px（寬度的一半），Y軸減 41px（時間框+間距+圖示中心點）
+            activeMoonItem.style.left = (x - 31) + 'px';
+            activeMoonItem.style.top = (y - 41) + 'px';
         });
 
         document.addEventListener('mouseup', () => {
@@ -594,9 +598,15 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        /* ----- 圖檔匯出邏輯（修復 input 渲染截斷問題） ----- */
+        /* ----- 圖檔匯出邏輯（修復分割視窗截圖基線偏離） ----- */
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
+            const wrapper = document.getElementById('export-area-wrapper');
+            
+            // 暫存並歸零捲軸，確保分割視窗下擷取不位移
+            const originalScrollLeft = wrapper.scrollLeft;
+            wrapper.scrollLeft = 0;
+
             const btn = document.querySelector('.btn-export');
             const originalText = btn.innerText;
             btn.innerText = '處理中...';
@@ -604,20 +614,26 @@
             html2canvas(captureArea, {
                 scale: 2,
                 useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1000,
                 onclone: (clonedDoc) => {
-                    // 將複製頁面中的 input.moon-time 轉為 div，防止 html2canvas 渲染原生 input 時產生的文字位移/裁切
-                    const timeInputs = clonedDoc.querySelectorAll('.moon-time');
+                    const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
+                    if (clonedWrapper) clonedWrapper.scrollLeft = 0;
+
+                    // 將 input 轉換為 div，採用標準 block + line-height 置中
+                    const timeInputs = clonedDoc.querySelectorAll('input.moon-time');
                     timeInputs.forEach(input => {
                         const textDiv = clonedDoc.createElement('div');
                         textDiv.className = input.className;
                         textDiv.innerText = input.value || input.placeholder || '';
                         
-                        // 修正文字置中與樣式
-                        textDiv.style.display = 'flex';
-                        textDiv.style.alignItems = 'center';
-                        textDiv.style.justifyContent = 'center';
+                        textDiv.style.display = 'block';
                         textDiv.style.height = '22px';
-                        textDiv.style.lineHeight = '22px';
+                        textDiv.style.lineHeight = '20px';
+                        textDiv.style.textAlign = 'center';
+                        textDiv.style.padding = '0';
+                        textDiv.style.margin = '0 0 2px 0';
                         textDiv.style.boxSizing = 'border-box';
                         
                         input.parentNode.replaceChild(textDiv, input);
@@ -629,9 +645,11 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 btn.innerText = originalText;
+                wrapper.scrollLeft = originalScrollLeft;
             }).catch(err => {
                 alert('匯出失敗，請再試一次。');
                 btn.innerText = originalText;
+                wrapper.scrollLeft = originalScrollLeft;
             });
         }
 
