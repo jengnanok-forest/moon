@@ -14,6 +14,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-sizing: border-box;
         }
         .controls {
             background: white;
@@ -22,6 +23,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
             width: 900px;
+            max-width: 100%;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -130,6 +132,10 @@
         }
         
         /* 記錄表主體區塊 */
+        #export-area-wrapper {
+            max-width: 100%;
+            overflow-x: auto;
+        }
         #export-area {
             background: white;
             padding: 30px;
@@ -157,7 +163,7 @@
             position: relative;
             width: 800px;
             height: 540px;
-            margin: 0 auto 50px 50px;
+            margin: 25px auto 50px 50px;
         }
         
         /* 圖表區塊設定 */
@@ -168,7 +174,6 @@
             background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
             border-left: 2px solid white;
             border-bottom: 2px solid white;
-            overflow: hidden;
             box-sizing: border-box;
         }
 
@@ -190,6 +195,7 @@
         .grid-line-x, .grid-line-y {
             position: absolute;
             background-color: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
         }
         .grid-line-x { width: 1px; height: 100%; }
         .grid-line-y { width: 100%; height: 1px; }
@@ -201,6 +207,7 @@
             top: 0;
             width: 40px;
             height: 100%;
+            pointer-events: none;
         }
         .y-label {
             position: absolute;
@@ -219,6 +226,7 @@
             left: 0;
             width: 100%;
             height: 30px;
+            pointer-events: none;
         }
         .x-label {
             position: absolute;
@@ -250,23 +258,31 @@
             align-items: center;
             transform: translate(-50%, -38px);
             user-select: none;
-            z-index: 10;
+            z-index: 20;
         }
 
-        /* 月亮上方的時間輸入框 */
+        /* 月亮上方的時間框修復（確保高度與行高一致） */
         .moon-time {
-            width: 60px;
-            padding: 2px 4px;
+            width: 62px;
+            height: 22px;
+            line-height: 20px;
+            padding: 0;
             font-size: 12px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.3);
             border-radius: 4px;
-            background: rgba(255, 255, 255, 0.9);
+            background: #ffffff;
             color: #2c3e50;
             font-weight: bold;
             outline: none;
             margin-bottom: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 21;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .moon-time:focus {
             background: #ffffff;
@@ -345,31 +361,33 @@
         <div class="hint">💡 提示：開啟畫筆模式即可在圖表上手繪軌跡；關閉畫筆後可繼續拖曳月亮或雙擊刪除月亮。</div>
     </div>
 
-    <!-- 匯出畫布區 -->
-    <div id="export-area">
-        <h2>月亮高度角與方位角觀測記錄</h2>
-        <div class="record-info">
-            <span id="dispDate">日期: ____________</span>
-            <span id="dispLoc">地點: ____________</span>
-            <span id="dispName">記錄者: ____________</span>
-        </div>
-        
-        <div class="chart-wrapper">
-            <div id="y-axis-labels"></div>
-            <div class="chart-container" id="chart">
-                <!-- 手繪註記 Canvas -->
-                <canvas id="drawingCanvas" width="800" height="540"></canvas>
-
-                <div class="landscape">
-                    <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
-                </div>
-                <!-- 預設月亮與時間框 -->
-                <div class="moon-item" style="left: 0px; top: 540px;">
-                    <input type="text" class="moon-time" placeholder="時間" value="18:00">
-                    <div class="moon-icon">🌕</div>
-                </div>
+    <!-- 匯出畫布區外層容器 -->
+    <div id="export-area-wrapper">
+        <div id="export-area">
+            <h2>月亮高度角與方位角觀測記錄</h2>
+            <div class="record-info">
+                <span id="dispDate">日期: ____________</span>
+                <span id="dispLoc">地點: ____________</span>
+                <span id="dispName">記錄者: ____________</span>
             </div>
-            <div id="x-axis-labels"></div>
+            
+            <div class="chart-wrapper">
+                <div id="y-axis-labels"></div>
+                <div class="chart-container" id="chart">
+                    <!-- 手繪註記 Canvas -->
+                    <canvas id="drawingCanvas" width="800" height="540"></canvas>
+
+                    <div class="landscape">
+                        <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
+                    </div>
+                    <!-- 預設月亮與時間框 -->
+                    <div class="moon-item" style="left: 0px; top: 540px;">
+                        <input type="text" class="moon-time" placeholder="時間" value="18:00">
+                        <div class="moon-icon">🌕</div>
+                    </div>
+                </div>
+                <div id="x-axis-labels"></div>
+            </div>
         </div>
     </div>
 
@@ -478,7 +496,7 @@
             let y = e.clientY - rect.top;
 
             x = Math.max(0, Math.min(x, chartWidth));
-            y = Math.max(0, Math.min(y, chartHeight));
+            y = Math.max(30, Math.min(y, chartHeight));
 
             activeMoonItem.style.left = x + 'px';
             activeMoonItem.style.top = y + 'px';
@@ -576,14 +594,36 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        /* ----- 圖檔匯出邏輯 ----- */
+        /* ----- 圖檔匯出邏輯（修復 input 渲染截斷問題） ----- */
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
             const btn = document.querySelector('.btn-export');
             const originalText = btn.innerText;
             btn.innerText = '處理中...';
 
-            html2canvas(captureArea, { scale: 2 }).then(canvas => {
+            html2canvas(captureArea, {
+                scale: 2,
+                useCORS: true,
+                onclone: (clonedDoc) => {
+                    // 將複製頁面中的 input.moon-time 轉為 div，防止 html2canvas 渲染原生 input 時產生的文字位移/裁切
+                    const timeInputs = clonedDoc.querySelectorAll('.moon-time');
+                    timeInputs.forEach(input => {
+                        const textDiv = clonedDoc.createElement('div');
+                        textDiv.className = input.className;
+                        textDiv.innerText = input.value || input.placeholder || '';
+                        
+                        // 修正文字置中與樣式
+                        textDiv.style.display = 'flex';
+                        textDiv.style.alignItems = 'center';
+                        textDiv.style.justifyContent = 'center';
+                        textDiv.style.height = '22px';
+                        textDiv.style.lineHeight = '22px';
+                        textDiv.style.boxSizing = 'border-box';
+                        
+                        input.parentNode.replaceChild(textDiv, input);
+                    });
+                }
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = '月亮觀測軌跡_' + Date.now() + '.png';
                 link.href = canvas.toDataURL('image/png');
