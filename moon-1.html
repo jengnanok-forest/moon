@@ -2,15 +2,17 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式月亮高度角觀測器 (量角器左右相反 & 位置上移版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>互動式月亮高度角觀測器 (Safari 觸控修正版)</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Helvetica Neue', Helvetica, Arial, "Microsoft JhengHei", sans-serif;
+            -webkit-user-select: none;
             user-select: none;
+            -webkit-touch-callout: none;
         }
 
         body {
@@ -28,6 +30,7 @@
             height: 100%;
             background: linear-gradient(to bottom, #101524 0%, #1a2642 60%, #2c3e6b 85%, #42598c 100%);
             cursor: default;
+            touch-action: none; /* 阻止 Safari 預設滾動與手勢 */
         }
 
         /* 地面 */
@@ -54,6 +57,7 @@
             z-index: 10;
             box-shadow: -4px 0 15px rgba(0,0,0,0.1);
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         h2 {
@@ -245,6 +249,7 @@
             width: 100%;
             height: 100%;
             z-index: 2;
+            touch-action: none;
         }
 
         /* 螢幕註記 Canvas 畫布 (位於 SVG 上方) */
@@ -256,6 +261,7 @@
             height: 100%;
             z-index: 6;
             pointer-events: none; /* 預設允許點擊穿透到下方 SVG */
+            touch-action: none;
         }
 
         .draggable {
@@ -340,7 +346,7 @@
                     <circle cx="155" cy="8" r="3" fill="black" />
                 </g>
 
-                <!-- 鉛錘線 (始終保持垂直向下，且移除了紅圈指示器) -->
+                <!-- 鉛錘線 (始終保持垂直向下) -->
                 <g id="plumb-group">
                     <line x1="0" y1="0" x2="0" y2="145" stroke="#1a202c" stroke-width="3" />
                     <polygon points="0,154 -6,142 6,142" fill="#1a202c" />
@@ -364,7 +370,7 @@
             <div id="status-badge" class="status-unaligned">未對準 ❌</div>
         </div>
 
-        <!-- 新增：螢幕繪圖註記工具區 -->
+        <!-- 螢幕繪圖註記工具區 -->
         <div class="data-group">
             <div class="data-label">螢幕註記畫筆</div>
             <div class="draw-tools">
@@ -429,7 +435,6 @@
         let skyWidth = sky.clientWidth;
         let skyHeight = sky.clientHeight;
 
-        // 【位置上移】
         let obsX = skyWidth * 0.76;
         let obsY = skyHeight * 0.48;
 
@@ -444,7 +449,6 @@
 
         // 初始化與調整註記 Canvas 尺寸
         function initDrawCanvas() {
-            // 保存原畫布內容避免縮放重置
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = drawCanvas.width;
             tempCanvas.height = drawCanvas.height;
@@ -457,7 +461,7 @@
             ctx.drawImage(tempCanvas, 0, 0);
         }
 
-        // 生成刻度 (左右相反：0° 在下方，90° 在最右側，180° 在最上方)
+        // 生成刻度 (0° 在下方，90° 在最右側，180° 在最上方)
         function generateTicks() {
             ticksContainer.innerHTML = '';
             for (let i = 0; i <= 180; i += 10) {
@@ -545,13 +549,22 @@
             valProtractorInfo.textContent = `量角器視管仰角: ${protractorAngle.toFixed(1)}° (目標仰角: ${targetAngle.toFixed(1)}°)`;
         }
 
+        /* 修正相容 Safari 的滑鼠/觸控座標計算 */
         function getMouseCoords(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches.clientX : e.clientX;
-            const clientY = e.touches ? e.touches.clientY : e.clientY;
+            const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : e);
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }
+
+        function getDrawCoords(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : ((e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : e);
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
             };
         }
 
@@ -563,7 +576,7 @@
 
             if (target.closest('#moon-group')) {
                 dragTarget = 'moon';
-                e.preventDefault();
+                if (e.cancelable) e.preventDefault();
             } 
             else if (target.closest('#rotatable-parts')) {
                 dragTarget = 'protractor';
@@ -571,12 +584,14 @@
                 const dy = coords.y - obsY;
                 startAngle = Math.atan2(dy, dx) * 180 / Math.PI;
                 startProtractorAngle = protractorAngle;
-                e.preventDefault();
+                if (e.cancelable) e.preventDefault();
             }
         }
 
         function onMove(e) {
             if (!dragTarget || currentMode !== 'move') return;
+            if (e.cancelable) e.preventDefault(); // 阻止 Safari 預設頁面滑動
+
             const coords = getMouseCoords(e);
 
             if (dragTarget === 'moon') {
@@ -603,38 +618,28 @@
         }
 
         /* 螢幕畫筆手繪註記邏輯 */
-        function getDrawCoords(e) {
-            const rect = drawCanvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches.clientX : e.clientX;
-            const clientY = e.touches ? e.touches.clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
         function startDrawing(e) {
             if (currentMode !== 'draw') return;
             isDrawing = true;
             lastDrawPos = getDrawCoords(e);
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
         }
 
         function draw(e) {
             if (!isDrawing || currentMode !== 'draw') return;
-            const pos = getDrawCoords(e);
+            if (e.cancelable) e.preventDefault();
             
+            const pos = getDrawCoords(e);
             ctx.beginPath();
             ctx.moveTo(lastDrawPos.x, lastDrawPos.y);
             ctx.lineTo(pos.x, pos.y);
             ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 5; // 醒目的粗線條 (5px)
+            ctx.lineWidth = 5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke();
 
             lastDrawPos = pos;
-            e.preventDefault();
         }
 
         function stopDrawing() {
@@ -647,11 +652,11 @@
             if (mode === 'draw') {
                 btnModeDraw.classList.add('active');
                 btnModeMove.classList.remove('active');
-                drawCanvas.style.pointerEvents = 'auto'; // 開啟繪圖層點擊
+                drawCanvas.style.pointerEvents = 'auto';
             } else {
                 btnModeMove.classList.add('active');
                 btnModeDraw.classList.remove('active');
-                drawCanvas.style.pointerEvents = 'none'; // 讓點擊穿透回物件拖動
+                drawCanvas.style.pointerEvents = 'none';
             }
         }
 
@@ -659,11 +664,11 @@
         btnModeDraw.addEventListener('click', () => setMode('draw'));
 
         colorDots.forEach(dot => {
-            dot.addEventListener('click', (e) => {
+            dot.addEventListener('click', () => {
                 colorDots.forEach(d => d.classList.remove('active'));
                 dot.classList.add('active');
                 strokeColor = dot.dataset.color;
-                setMode('draw'); // 點選顏色時自動切換至畫筆模式
+                setMode('draw');
             });
         });
 
@@ -671,7 +676,7 @@
             ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         });
 
-        /* 事件監聽註冊 */
+        /* 事件監聽註冊 (增加 passive: false 以允許 preventDefault) */
         drawCanvas.addEventListener('mousedown', startDrawing);
         drawCanvas.addEventListener('mousemove', draw);
         drawCanvas.addEventListener('mouseup', stopDrawing);
