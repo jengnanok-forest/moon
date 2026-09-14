@@ -22,36 +22,36 @@
     <!-- 全螢幕手繪註記畫布 (z-40，預設 pointer-events-none 不擋住底下點擊) -->
     <canvas id="drawing-canvas" class="fixed inset-0 z-40 pointer-events-none w-full h-full"></canvas>
 
-    <!-- 頂部導航欄 (z-50 確保控制區永遠可正常點擊) -->
-    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 shadow-md relative z-50">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- 頂部導航欄 -->
+    <header class="bg-slate-900 border-b border-slate-800 py-3 px-4 shadow-md relative z-50">
+        <div class="w-[80%] max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
             
             <!-- 標題與螢幕畫筆註記工具列 -->
             <div class="flex items-center gap-3 flex-wrap">
-                <span class="text-3xl">🌙</span>
+                <span class="text-2xl">🌙</span>
                 <div>
-                    <h1 class="text-xl font-bold bg-gradient-to-r from-amber-200 to-indigo-400 bg-clip-text text-transparent">月亮觀測與月相變化互動學習網</h1>
-                    <p class="text-xs text-slate-400">專為國小地科設計：可拖曳月亮高度角、方位與動態記錄工具</p>
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-amber-200 to-indigo-400 bg-clip-text text-transparent">月亮觀測與月相變化互動學習網</h1>
+                    <p class="text-xs text-slate-400">專為國小地科設計：可拖曳月亮高度角、方位與動態演示</p>
                 </div>
 
                 <!-- 螢幕手繪註記工具列 -->
-                <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 ml-0 lg:ml-4 shadow-inner">
-                    <button id="draw-toggle-btn" onclick="toggleDrawingMode()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all flex items-center gap-1.5 border border-slate-700 cursor-pointer">
+                <div class="flex items-center gap-1.5 bg-slate-950/80 p-1.5 rounded-lg border border-slate-800 ml-0 lg:ml-2 shadow-inner">
+                    <button id="draw-toggle-btn" onclick="toggleDrawingMode()" class="px-2.5 py-1 rounded text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all flex items-center gap-1 border border-slate-700 cursor-pointer">
                         <span>✏️ 螢幕畫筆</span>
-                        <span id="draw-status-tag" class="text-[10px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded">關閉</span>
+                        <span id="draw-status-tag" class="text-[10px] bg-slate-900 text-slate-400 px-1 py-0.5 rounded">關閉</span>
                     </button>
                     
                     <!-- 多色選擇 -->
                     <div class="flex items-center gap-1 px-1 border-l border-slate-800">
-                        <button onclick="setDrawColor('#f87171')" class="color-btn w-5 h-5 rounded-full bg-red-400 border-2 border-white transition-all transform hover:scale-110 cursor-pointer" data-color="#f87171" title="紅色"></button>
-                        <button onclick="setDrawColor('#facc15')" class="color-btn w-5 h-5 rounded-full bg-yellow-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#facc15" title="黃色"></button>
-                        <button onclick="setDrawColor('#4ade80')" class="color-btn w-5 h-5 rounded-full bg-green-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#4ade80" title="綠色"></button>
-                        <button onclick="setDrawColor('#38bdf8')" class="color-btn w-5 h-5 rounded-full bg-sky-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#38bdf8" title="藍色"></button>
-                        <button onclick="setDrawColor('#ffffff')" class="color-btn w-5 h-5 rounded-full bg-white border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#ffffff" title="白色"></button>
+                        <button onclick="setDrawColor('#f87171')" class="color-btn w-4 h-4 rounded-full bg-red-400 border-2 border-white transition-all transform hover:scale-110 cursor-pointer" data-color="#f87171" title="紅色"></button>
+                        <button onclick="setDrawColor('#facc15')" class="color-btn w-4 h-4 rounded-full bg-yellow-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#facc15" title="黃色"></button>
+                        <button onclick="setDrawColor('#4ade80')" class="color-btn w-4 h-4 rounded-full bg-green-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#4ade80" title="綠色"></button>
+                        <button onclick="setDrawColor('#38bdf8')" class="color-btn w-4 h-4 rounded-full bg-sky-400 border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#38bdf8" title="藍色"></button>
+                        <button onclick="setDrawColor('#ffffff')" class="color-btn w-4 h-4 rounded-full bg-white border-2 border-transparent transition-all transform hover:scale-110 cursor-pointer" data-color="#ffffff" title="白色"></button>
                     </div>
                     
                     <!-- 清除畫布 -->
-                    <button onclick="clearCanvas()" class="px-2 py-1.5 rounded-lg text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-900/50 transition-all cursor-pointer" title="清除所有註記">
+                    <button onclick="clearCanvas()" class="px-2 py-1 rounded text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-900/50 transition-all cursor-pointer" title="清除所有註記">
                         🗑️ 清除
                     </button>
                 </div>
@@ -59,45 +59,47 @@
 
             <!-- 動態播放控制鈕 -->
             <div class="flex gap-2">
-                <button onclick="simulateDayMovement()" id="play-day-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-indigo-900/30 cursor-pointer">
+                <button onclick="simulateDayMovement()" id="play-day-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-md transition-all flex items-center gap-1.5 shadow shadow-indigo-900/30 cursor-pointer">
                     <span>🎬 模擬一天移動</span>
                 </button>
-                <button onclick="togglePhaseAnimation()" id="play-phase-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/30 cursor-pointer">
+                <button onclick="togglePhaseAnimation()" id="play-phase-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-md transition-all flex items-center gap-1.5 shadow shadow-emerald-900/30 cursor-pointer">
                     <span id="play-phase-text">🔄 播放月相盈虧</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 主要內容區 -->
-    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow w-full relative z-10">
+    <!-- 主要內容區 (80% 寬度置中，上下垂直排列) -->
+    <main class="w-[80%] max-w-7xl mx-auto py-6 flex flex-col gap-6 flex-grow relative z-10">
         
-        <!-- 左側：天文觀測模擬星空 (7 欄) -->
-        <div class="lg:col-span-7 flex flex-col gap-4">
-            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full">
+        <!-- 上方：天文觀測模擬星空 (容器拉長至 h-[480px]) -->
+        <div class="w-full flex flex-col gap-4">
+            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-200 flex items-center gap-2">
                         <span>🌌</span> 模擬觀測夜空 (拖曳或點擊可移動月亮)
                     </h2>
-                    <span class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full border border-slate-700">面朝正南方觀察</span>
+                    <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700 font-medium">面朝正南方觀察</span>
                 </div>
 
-                <!-- 星空畫布容器 -->
-                <div id="grid-container" class="relative w-full h-[320px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border border-slate-700/80 rounded-xl overflow-hidden cursor-crosshair select-none">
+                <!-- 星空畫布容器：高度加大至 480px，縱軸拉長 -->
+                <div id="grid-container" class="relative w-full h-[480px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border border-slate-700/80 rounded-xl overflow-hidden cursor-crosshair select-none">
                     
                     <!-- 隨機背景星星 -->
                     <svg class="absolute inset-0 w-full h-full opacity-60 pointer-events-none">
-                        <circle cx="50" cy="40" r="1" fill="#fff" class="star" style="animation-delay: 0.2s" />
-                        <circle cx="120" cy="80" r="1.5" fill="#fff" class="star" style="animation-delay: 1.5s" />
-                        <circle cx="180" cy="30" r="1" fill="#fff" class="star" style="animation-delay: 0.8s" />
-                        <circle cx="280" cy="70" r="1.2" fill="#fff" class="star" style="animation-delay: 2.1s" />
-                        <circle cx="340" cy="40" r="1" fill="#fff" class="star" style="animation-delay: 1.1s" />
-                        <circle cx="420" cy="90" r="1.5" fill="#fff" class="star" style="animation-delay: 0.5s" />
-                        <circle cx="460" cy="35" r="1" fill="#fff" class="star" style="animation-delay: 2.7s" />
+                        <circle cx="50" cy="50" r="1.2" fill="#fff" class="star" style="animation-delay: 0.2s" />
+                        <circle cx="120" cy="120" r="1.8" fill="#fff" class="star" style="animation-delay: 1.5s" />
+                        <circle cx="180" cy="40" r="1.2" fill="#fff" class="star" style="animation-delay: 0.8s" />
+                        <circle cx="280" cy="100" r="1.5" fill="#fff" class="star" style="animation-delay: 2.1s" />
+                        <circle cx="340" cy="60" r="1.2" fill="#fff" class="star" style="animation-delay: 1.1s" />
+                        <circle cx="420" cy="140" r="1.8" fill="#fff" class="star" style="animation-delay: 0.5s" />
+                        <circle cx="460" cy="50" r="1.2" fill="#fff" class="star" style="animation-delay: 2.7s" />
+                        <circle cx="220" cy="180" r="1.5" fill="#fff" class="star" style="animation-delay: 1.8s" />
+                        <circle cx="380" cy="220" r="1.2" fill="#fff" class="star" style="animation-delay: 0.4s" />
                     </svg>
 
-                    <!-- 高度角與方位角 坐標軸線 (SVG) -->
-                    <svg id="sky-grid" class="absolute inset-0 w-full h-full pointer-events-none select-none" viewBox="0 0 500 300" preserveAspectRatio="none">
+                    <!-- 高度角與方位角 坐標軸線 (SVG) - viewBox 高度改為 450，刻度距離加寬 -->
+                    <svg id="sky-grid" class="absolute inset-0 w-full h-full pointer-events-none select-none" viewBox="0 0 500 450" preserveAspectRatio="none">
                         <defs>
                             <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
                                 <feGaussianBlur stdDeviation="8" result="blur" />
@@ -105,40 +107,50 @@
                             </filter>
                         </defs>
 
-                        <!-- 高度角橫線 (0° ~ 90°) -->
-                        <line x1="40" y1="223" x2="460" y2="223" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="227" fill="#64748b" font-size="10" font-weight="bold">15°</text>
-                        
-                        <line x1="40" y1="187" x2="460" y2="187" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="191" fill="#64748b" font-size="10" font-weight="bold">30°</text>
-                        
-                        <line x1="40" y1="150" x2="460" y2="150" stroke="#475569" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="154" fill="#94a3b8" font-size="10" font-weight="bold">45°</text>
-                        
-                        <line x1="40" y1="113" x2="460" y2="113" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="117" fill="#64748b" font-size="10" font-weight="bold">60°</text>
-                        
-                        <line x1="40" y1="77" x2="460" y2="77" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="81" fill="#64748b" font-size="10" font-weight="bold">75°</text>
-                        
+                        <!-- 高度角橫線 (10° ~ 90°，每 10° 間隔 40 單位，拉長縱軸距離) -->
+                        <line x1="40" y1="360" x2="460" y2="360" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="364" fill="#64748b" font-size="10" font-weight="bold">10°</text>
+
+                        <line x1="40" y1="320" x2="460" y2="320" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="324" fill="#64748b" font-size="10" font-weight="bold">20°</text>
+
+                        <line x1="40" y1="280" x2="460" y2="280" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="284" fill="#64748b" font-size="10" font-weight="bold">30°</text>
+
+                        <line x1="40" y1="240" x2="460" y2="240" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="244" fill="#64748b" font-size="10" font-weight="bold">40°</text>
+
+                        <line x1="40" y1="200" x2="460" y2="200" stroke="#475569" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="204" fill="#94a3b8" font-size="10" font-weight="bold">50°</text>
+
+                        <line x1="40" y1="160" x2="460" y2="160" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="164" fill="#64748b" font-size="10" font-weight="bold">60°</text>
+
+                        <line x1="40" y1="120" x2="460" y2="120" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="124" fill="#64748b" font-size="10" font-weight="bold">70°</text>
+
+                        <line x1="40" y1="80" x2="460" y2="80" stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+                        <text x="16" y="84" fill="#64748b" font-size="10" font-weight="bold">80°</text>
+
                         <line x1="40" y1="40" x2="460" y2="40" stroke="#475569" stroke-dasharray="4 4" stroke-width="1" />
-                        <text x="18" y="44" fill="#94a3b8" font-size="10" font-weight="bold">90°</text>
+                        <text x="16" y="44" fill="#94a3b8" font-size="10" font-weight="bold">90°</text>
 
                         <!-- 方位角直線 -->
-                        <line x1="145" y1="40" x2="145" y2="260" stroke="#334155" stroke-dasharray="4 4" />
-                        <line x1="250" y1="40" x2="250" y2="260" stroke="#475569" stroke-dasharray="4 4" stroke-width="1.2" />
-                        <line x1="355" y1="40" x2="355" y2="260" stroke="#334155" stroke-dasharray="4 4" />
+                        <line x1="145" y1="40" x2="145" y2="400" stroke="#334155" stroke-dasharray="4 4" />
+                        <line x1="250" y1="40" x2="250" y2="400" stroke="#475569" stroke-dasharray="4 4" stroke-width="1.2" />
+                        <line x1="355" y1="40" x2="355" y2="400" stroke="#334155" stroke-dasharray="4 4" />
 
-                        <!-- 方位地平標籤 -->
-                        <line x1="40" y1="260" x2="460" y2="260" stroke="#64748b" stroke-width="2" />
+                        <!-- 方位地平線 -->
+                        <line x1="40" y1="400" x2="460" y2="400" stroke="#64748b" stroke-width="2" />
                         
-                        <text x="40" y="282" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">東 (90°)</text>
-                        <text x="145" y="282" fill="#94a3b8" font-size="11" text-anchor="middle">東南</text>
-                        <text x="250" y="282" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">正南 (180°)</text>
-                        <text x="355" y="282" fill="#94a3b8" font-size="11" text-anchor="middle">西南</text>
-                        <text x="460" y="282" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">西 (270°)</text>
+                        <!-- 方位地平標籤 -->
+                        <text x="40" y="424" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">東 (90°)</text>
+                        <text x="145" y="424" fill="#94a3b8" font-size="11" text-anchor="middle">東南</text>
+                        <text x="250" y="424" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">正南 (180°)</text>
+                        <text x="355" y="424" fill="#94a3b8" font-size="11" text-anchor="middle">西南</text>
+                        <text x="460" y="424" fill="#e2e8f0" font-size="12" font-weight="bold" text-anchor="middle">西 (270°)</text>
 
-                        <!-- 動態月亮組（將由 JS 控制 translate） -->
+                        <!-- 動態月亮組 -->
                         <g id="moon-group" class="cursor-pointer" filter="url(#glow)">
                             <circle cx="0" cy="0" r="16" fill="#1e293b" stroke="#334155" stroke-width="1" />
                             <path id="moon-lit-path" fill="#fef08a" />
@@ -148,81 +160,56 @@
                 </div>
                 
                 <!-- 快捷操作說明 -->
-                <p class="text-xs text-slate-400 mt-2 text-center">
+                <p class="text-xs sm:text-sm text-slate-400 mt-2.5 text-center">
                     💡 使用滑鼠或手機觸控「拖曳月亮」，即可即時調整高度角（縱軸）與方位角（橫軸）。
                 </p>
             </div>
         </div>
 
-        <!-- 右側：控制面板 (5 欄) -->
-        <div class="lg:col-span-5 flex flex-col gap-4">
-            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between h-full">
+        <!-- 下方：月相變化控制台 (放大控制台內的文字與欄位) -->
+        <div class="w-full flex flex-col gap-4">
+            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
                 
-                <!-- 月亮即時數據 -->
                 <div>
-                    <h2 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
-                        <span>⚙️</span> 觀測微調控制台
-                    </h2>
-
-                    <!-- 高度角滑桿 -->
-                    <div class="mb-4">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-slate-300">📐 月亮高度角：</span>
-                            <span class="font-mono text-amber-300 font-bold" id="altitude-val">45°</span>
-                        </div>
-                        <input type="range" id="altitude-slider" min="0" max="90" value="45" 
-                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
-                    </div>
-
-                    <!-- 方位角滑桿 -->
-                    <div class="mb-5">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-slate-300">🧭 觀測方位：</span>
-                            <span class="font-mono text-indigo-300 font-bold" id="azimuth-val">正南 (180°)</span>
-                        </div>
-                        <input type="range" id="azimuth-slider" min="90" max="270" value="180" 
-                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-400">
+                    <!-- 控制台標題與指示 -->
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
+                            <span>⚙️</span> 月相變化控制台
+                        </h2>
+                        <span class="text-base sm:text-xl font-bold text-amber-300 flex items-center gap-1" id="phase-name">
+                            🌕 虧凸月
+                        </span>
                     </div>
 
                     <!-- 月相控制器 -->
-                    <div class="border-t border-slate-800 pt-4 mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-slate-300">🌑 月相變化選擇：</span>
-                            <span class="text-sm font-bold text-amber-200" id="phase-name">上弦月</span>
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-base text-slate-200 font-semibold">🌑 月相選擇與控制：</span>
                         </div>
                         
-                        <!-- 8個經典月相快捷鈕 -->
-                        <div class="grid grid-cols-4 gap-1.5 mb-3">
-                            <button onclick="setMoonPhase(0)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">新月</button>
-                            <button onclick="setMoonPhase(1)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">眉月</button>
-                            <button onclick="setMoonPhase(2)" class="phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white cursor-pointer">上弦</button>
-                            <button onclick="setMoonPhase(3)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">盈凸</button>
-                            <button onclick="setMoonPhase(4)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">滿月</button>
-                            <button onclick="setMoonPhase(5)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">虧凸</button>
-                            <button onclick="setMoonPhase(6)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">下弦</button>
-                            <button onclick="setMoonPhase(7)" class="phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer">殘月</button>
+                        <!-- 8個經典月相快捷鈕 (文字加大、高度加寬) -->
+                        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-4">
+                            <button onclick="setMoonPhase(0)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">新月</button>
+                            <button onclick="setMoonPhase(1)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">眉月</button>
+                            <button onclick="setMoonPhase(2)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-indigo-900 border border-indigo-500 font-bold text-white cursor-pointer">上弦</button>
+                            <button onclick="setMoonPhase(3)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">盈凸</button>
+                            <button onclick="setMoonPhase(4)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">滿月</button>
+                            <button onclick="setMoonPhase(5)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">虧凸</button>
+                            <button onclick="setMoonPhase(6)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">下弦</button>
+                            <button onclick="setMoonPhase(7)" class="phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer font-medium">殘月</button>
                         </div>
 
-                        <!-- 月相滑桿 (連續) -->
+                        <!-- 月相滑桿 -->
                         <input type="range" id="phase-slider" min="0" max="7" value="2" step="1"
-                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-300">
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-300 my-2">
                         
-                        <!-- 月相科普說明 -->
-                        <div class="mt-2 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 min-h-[64px]">
-                            <p class="text-xs text-slate-400 leading-relaxed" id="phase-desc">農曆初七至初八。亮面在右半邊，黃昏時在中天（正南方）最高，半夜在西方落下。</p>
+                        <!-- 月相科普說明 (顯著放大文字 text-base ~ text-lg、深色清晰背景框) -->
+                        <div class="mt-4 bg-slate-950/80 p-4 sm:p-5 rounded-xl border border-slate-700/80 min-h-[75px] flex items-center shadow-inner">
+                            <p class="text-base sm:text-lg text-amber-100/90 leading-relaxed font-medium" id="phase-desc">
+                                農曆十八至十九。亮面開始缺角，亮面在左半邊居多，入夜後從東方升起。
+                            </p>
                         </div>
                     </div>
-                </div>
-
-                <!-- 新增記錄操作區 -->
-                <div class="border-t border-slate-800 pt-4 mt-2 flex flex-col gap-2">
-                    <div class="grid grid-cols-1 gap-2">
-                        <input type="text" id="obs-notes" placeholder="輸入此筆觀測筆記（例：晚餐後在操場觀測）" 
-                               class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 w-full placeholder-slate-600 select-text">
-                    </div>
-                    <button onclick="addCurrentRecord()" class="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold text-sm rounded-lg transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer">
-                        <span>📝 將當前數值加入觀測表</span>
-                    </button>
                 </div>
 
             </div>
@@ -230,50 +217,8 @@
 
     </main>
 
-    <!-- 下半部：觀測記錄表格 (滿版寬度) -->
-    <section class="max-w-7xl mx-auto p-4 lg:p-6 w-full relative z-10">
-        <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-                        <span>📋</span> 月亮高度角與月相觀測記錄表
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-1">可在表格中直接點擊「修改」時間與備註，資料會自動保存至瀏覽器</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg border border-slate-700 transition-all flex items-center gap-1 cursor-pointer">
-                        📥 匯出 Excel / CSV
-                    </button>
-                    <button onclick="clearAllRecords()" class="bg-red-950/40 hover:bg-red-900/40 text-red-400 text-xs px-3 py-2 rounded-lg border border-red-900/50 transition-all cursor-pointer">
-                        🗑️ 清空表格
-                    </button>
-                </div>
-            </div>
-
-            <!-- 表格容器 -->
-            <div class="overflow-x-auto border border-slate-800 rounded-xl">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-950 text-slate-300 text-xs uppercase tracking-wider font-semibold border-b border-slate-800">
-                            <th class="py-3 px-4 w-12 text-center">編號</th>
-                            <th class="py-3 px-4 w-52">觀測時間</th>
-                            <th class="py-3 px-4 w-32">方位 (橫軸)</th>
-                            <th class="py-3 px-4 w-28">高度角 (縱軸)</th>
-                            <th class="py-3 px-4 w-36">觀測月相</th>
-                            <th class="py-3 px-4">觀測與環境筆記 (可直接修改)</th>
-                            <th class="py-3 px-4 w-16 text-center">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="records-tbody" class="text-sm divide-y divide-slate-800/60 select-text">
-                        <!-- JS 動態渲染 -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
     <!-- 底部版權宣告 -->
-    <footer class="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500 mt-auto relative z-10">
+    <footer class="bg-slate-950 border-t border-slate-900 py-4 text-center text-xs sm:text-sm text-slate-500 mt-auto relative z-10">
         <p>© 2026 互動式天文觀測學習教具 · 面向正南方觀測設計</p>
     </footer>
 
@@ -292,18 +237,6 @@
         let drawColor = '#f87171';
         let drawLineWidth = 3;
 
-        // 預設觀測紀錄
-        let records = [
-            {
-                id: 1,
-                time: '2026-09-04 19:00',
-                azimuth: '正南 (180°)',
-                altitude: '45°',
-                phaseName: '上弦月',
-                notes: '操場觀測，天空無雲，月亮很清晰'
-            }
-        ];
-
         // 月相詳細資料
         const MOON_PHASES = [
             { name: '🌑 新月 (朔)', desc: '農曆初一。月亮亮面背對地球，與太陽同升同落，夜空看不見月亮。' },
@@ -317,14 +250,12 @@
         ];
 
         // DOM 引用宣告
-        let altSlider, azSlider, phaseSlider, gridContainer;
+        let phaseSlider, gridContainer;
         let moonGroup, moonLitPath, moonFullCircle;
-        let altVal, azVal, phaseName, phaseDesc;
+        let phaseName, phaseDesc;
 
-        // DOM 載入後安全初始化
+        // DOM 載入後初始化
         window.addEventListener('DOMContentLoaded', () => {
-            altSlider = document.getElementById('altitude-slider');
-            azSlider = document.getElementById('azimuth-slider');
             phaseSlider = document.getElementById('phase-slider');
             gridContainer = document.getElementById('grid-container');
 
@@ -332,36 +263,10 @@
             moonLitPath = document.getElementById('moon-lit-path');
             moonFullCircle = document.getElementById('moon-full-circle');
 
-            altVal = document.getElementById('altitude-val');
-            azVal = document.getElementById('azimuth-val');
             phaseName = document.getElementById('phase-name');
             phaseDesc = document.getElementById('phase-desc');
 
-            // 安全讀取 LocalStorage (防程式崩潰)
-            try {
-                const saved = localStorage.getItem('moon_obs_records');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) {
-                        records = parsed;
-                    }
-                }
-            } catch (err) {
-                console.error("LocalStorage format error, reset:", err);
-                localStorage.removeItem('moon_obs_records');
-            }
-
-            // 綁定輸入滑桿
-            altSlider.addEventListener('input', (e) => {
-                currentAlt = parseInt(e.target.value);
-                updateMoonVisualization();
-            });
-
-            azSlider.addEventListener('input', (e) => {
-                currentAz = parseInt(e.target.value);
-                updateMoonVisualization();
-            });
-
+            // 綁定月相滑桿
             phaseSlider.addEventListener('input', (e) => {
                 currentPhaseIndex = parseInt(e.target.value);
                 updateMoonVisualization();
@@ -373,48 +278,33 @@
 
             // 繪製初始狀態
             updateMoonVisualization();
-            renderRecordsTable();
         });
-
-        // 方位角度轉換文字描述
-        function getAzimuthText(az) {
-            if (az < 112.5) return `東偏南 (${az}°)`;
-            if (az <= 157.5) return `東南 (${az}°)`;
-            if (az < 202.5) return `正南 (${az}°)`;
-            if (az <= 247.5) return `西南 (${az}°)`;
-            return `西偏南 (${az}°)`;
-        }
 
         // 畫面更新核心函式
         function updateMoonVisualization() {
-            if (!altVal || !azVal) return;
+            if (!phaseName || !phaseDesc) return;
 
-            // 1. 更新數值顯示
-            altVal.textContent = `${currentAlt}°`;
-            azVal.textContent = getAzimuthText(currentAz);
-            
+            // 1. 更新月相文字與描述
             phaseName.textContent = MOON_PHASES[currentPhaseIndex].name;
             phaseDesc.textContent = MOON_PHASES[currentPhaseIndex].desc;
 
-            // 同步滑桿
-            altSlider.value = currentAlt;
-            azSlider.value = currentAz;
+            // 同步月相滑桿
             phaseSlider.value = currentPhaseIndex;
 
             // 更新月相按鈕高亮
             document.querySelectorAll('.phase-btn').forEach((btn, idx) => {
                 if (idx === currentPhaseIndex) {
-                    btn.className = "phase-btn py-1 text-xs rounded bg-indigo-900 border border-indigo-500 font-bold text-white shadow cursor-pointer";
+                    btn.className = "phase-btn py-2 text-xs sm:text-sm rounded-lg bg-indigo-900 border border-indigo-500 font-bold text-white shadow cursor-pointer";
                 } else {
-                    btn.className = "phase-btn py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 cursor-pointer";
+                    btn.className = "phase-btn py-2 text-xs sm:text-sm rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 cursor-pointer font-medium";
                 }
             });
 
-            // 2. 計算月亮在 SVG 座標系中的位置
+            // 2. 計算月亮在 SVG 座標系中的位置 (viewBox Height = 450)
             const minX = 40, maxX = 460;
             const moonX = minX + ((currentAz - 90) / 180) * (maxX - minX);
 
-            const minY = 260, maxY = 40;
+            const minY = 400, maxY = 40;
             const moonY = minY - (currentAlt / 90) * (minY - maxY);
 
             moonGroup.setAttribute('transform', `translate(${moonX}, ${moonY})`);
@@ -495,7 +385,7 @@
             }
 
             gridContainer.addEventListener('mousedown', (e) => {
-                if (isDrawingMode) return; // 繪圖模式下不觸發月亮拖曳
+                if (isDrawingMode) return;
                 isDragging = true;
                 handleMove(e.clientX, e.clientY);
             });
@@ -678,14 +568,14 @@
                 btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-400');
                 btn.classList.remove('bg-slate-800', 'text-slate-200', 'border-slate-700');
                 statusTag.textContent = '開啟中';
-                statusTag.className = 'text-[10px] bg-red-500 text-white font-bold px-1.5 py-0.5 rounded animate-pulse';
+                statusTag.className = 'text-[10px] bg-red-500 text-white font-bold px-1 py-0.5 rounded animate-pulse';
             } else {
                 canvas.style.pointerEvents = 'none';
                 canvas.style.cursor = 'default';
                 btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-400');
                 btn.classList.add('bg-slate-800', 'text-slate-200', 'border-slate-700');
                 statusTag.textContent = '關閉';
-                statusTag.className = 'text-[10px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded';
+                statusTag.className = 'text-[10px] bg-slate-900 text-slate-400 px-1 py-0.5 rounded';
             }
         }
 
@@ -712,132 +602,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
-        }
-
-        // ==========================================
-        // 表格與紀錄核心邏輯
-        // ==========================================
-        function addCurrentRecord() {
-            const notesInput = document.getElementById('obs-notes');
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            const newRecord = {
-                id: Date.now(),
-                time: timeStr,
-                azimuth: getAzimuthText(currentAz),
-                altitude: `${currentAlt}°`,
-                phaseName: MOON_PHASES[currentPhaseIndex].name.split(' ')[1] || MOON_PHASES[currentPhaseIndex].name,
-                notes: notesInput.value.trim() || '無備註'
-            };
-
-            records.unshift(newRecord);
-            notesInput.value = '';
-            saveAndRender();
-        }
-
-        function deleteRecord(id) {
-            records = records.filter(r => r.id !== id);
-            saveAndRender();
-        }
-
-        function updateRecordField(id, field, value) {
-            const record = records.find(r => r.id === id);
-            if (record) {
-                record[field] = value;
-                saveRecordsToStorage();
-            }
-        }
-
-        function clearAllRecords() {
-            if (confirm('確定要清空所有觀測記錄嗎？')) {
-                records = [];
-                saveAndRender();
-            }
-        }
-
-        function saveRecordsToStorage() {
-            try {
-                localStorage.setItem('moon_obs_records', JSON.stringify(records));
-            } catch (e) {
-                console.error("儲存失敗:", e);
-            }
-        }
-
-        function saveAndRender() {
-            saveRecordsToStorage();
-            renderRecordsTable();
-        }
-
-        function renderRecordsTable() {
-            const tbody = document.getElementById('records-tbody');
-            if (!tbody) return;
-
-            if (records.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-500">
-                            目前尚無觀測記錄，請調整上方參數後點擊「將當前數值加入觀測表」。
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = records.map((r, index) => `
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                    <td class="py-3 px-4 text-center font-mono text-slate-400 text-xs">${records.length - index}</td>
-                    <td class="py-3 px-4">
-                        <input type="text" value="${r.time}" 
-                               onchange="updateRecordField(${r.id}, 'time', this.value)"
-                               class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200 w-full focus:border-indigo-500 font-mono">
-                    </td>
-                    <td class="py-3 px-4 font-mono text-indigo-300 font-medium text-xs">${r.azimuth}</td>
-                    <td class="py-3 px-4 font-mono text-amber-300 font-medium text-xs">${r.altitude}</td>
-                    <td class="py-3 px-4 text-amber-200 font-medium text-xs">${r.phaseName}</td>
-                    <td class="py-3 px-4">
-                        <input type="text" value="${r.notes}" 
-                               onchange="updateRecordField(${r.id}, 'notes', this.value)"
-                               class="bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300 w-full focus:border-indigo-500">
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                        <button onclick="deleteRecord(${r.id})" class="text-xs text-red-400 hover:text-red-300 p-1 hover:bg-red-950/50 rounded transition-all cursor-pointer" title="刪除此紀錄">
-                            🗑️
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function exportCSV() {
-            if (records.length === 0) {
-                alert('目前沒有紀錄可供匯出！');
-                return;
-            }
-
-            let csvContent = "\uFEFF"; // UTF-8 BOM
-            csvContent += "編號,觀測時間,方位,高度角,觀測月相,觀測與環境筆記\n";
-
-            records.forEach((r, idx) => {
-                const row = [
-                    records.length - idx,
-                    `"${r.time}"`,
-                    `"${r.azimuth}"`,
-                    `"${r.altitude}"`,
-                    `"${r.phaseName}"`,
-                    `"${r.notes.replace(/"/g, '""')}"`
-                ];
-                csvContent += row.join(",") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `月亮觀測記錄_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
