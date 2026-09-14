@@ -107,13 +107,6 @@
             cursor: pointer;
             background: none;
         }
-        .hint {
-            width: 100%;
-            font-size: 14px;
-            color: #d9534f;
-            font-weight: bold;
-            margin-top: 2px;
-        }
         
         #export-area-wrapper {
             width: 100%;
@@ -162,7 +155,6 @@
             letter-spacing: 2px;
         }
 
-        /* 統計圖上方的月相選擇工具列 */
         .moon-select-bar {
             display: flex;
             justify-content: center;
@@ -277,7 +269,6 @@
             z-index: 20;
         }
 
-        /* 刪除月亮按鈕 */
         .moon-delete-btn {
             position: absolute;
             top: -8px;
@@ -386,8 +377,6 @@
             <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
             <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
         </div>
-
-        <div class="hint">💡 提示：在觀測統計圖上方選擇月相並點擊「➕ 加入新月亮」；啟用畫筆可在圖上手繪軌跡，關閉畫筆後可拖曳月亮，點擊月亮右上角的「×」即可刪除。</div>
     </div>
 
     <div id="export-area-wrapper">
@@ -426,7 +415,6 @@
                 </tr>
             </table>
             
-            <!-- 搬移至此：橫軸縱軸統計圖正上方的月相選擇列 -->
             <div class="moon-select-bar">
                 <label for="phaseSelect" style="font-weight: bold; font-size: 15px; color: #2c3e50;">選擇月相：</label>
                 <select id="phaseSelect">
@@ -579,7 +567,6 @@
             moonItem.style.left = '10px';
             moonItem.style.top = '460px';
 
-            // 刪除按鈕
             const delBtn = document.createElement('button');
             delBtn.type = 'button';
             delBtn.className = 'moon-delete-btn';
@@ -594,13 +581,11 @@
             delBtn.addEventListener('click', deleteAction);
             delBtn.addEventListener('touchstart', deleteAction, { passive: false });
 
-            // 時間輸入框
             const timeInput = document.createElement('input');
             timeInput.type = 'text';
             timeInput.className = 'moon-time';
             timeInput.placeholder = '時間';
 
-            // 月相圖示
             const moonIcon = document.createElement('div');
             moonIcon.className = 'moon-icon';
             moonIcon.innerText = phase;
@@ -611,7 +596,6 @@
             chart.appendChild(moonItem);
         }
 
-        // --- 拖曳與互動控制 ---
         const chart = document.getElementById('chart');
         let activeMoonItem = null;
         let isDragging = false;
@@ -651,12 +635,10 @@
             activeMoonItem = null;
         }
 
-        // 滑鼠事件監聽
         document.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', stopDrag);
 
-        // 觸控事件監聽
         document.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
             const item = e.target.closest('.moon-item');
@@ -670,7 +652,6 @@
         document.addEventListener('touchend', stopDrag);
         document.addEventListener('touchcancel', stopDrag);
 
-        // 雙擊刪除備用機制
         document.addEventListener('dblclick', (e) => {
             if (isPenActive || e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
 
@@ -680,7 +661,6 @@
             }
         });
 
-        // --- 畫筆機制 ---
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isPenActive = false;
@@ -768,7 +748,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 匯出圖檔
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
             const wrapper = document.getElementById('export-area-wrapper');
@@ -790,11 +769,9 @@
                     const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
                     if (clonedWrapper) clonedWrapper.scrollLeft = 0;
 
-                    // 匯出圖檔時，自動隱藏圖表上方的月相選擇工具列
                     const clonedSelectBar = clonedDoc.querySelector('.moon-select-bar');
                     if (clonedSelectBar) clonedSelectBar.remove();
 
-                    // 匯出時隱藏所有「×」刪除按鈕
                     const clonedDelBtns = clonedDoc.querySelectorAll('.moon-delete-btn');
                     clonedDelBtns.forEach(b => b.remove());
 
