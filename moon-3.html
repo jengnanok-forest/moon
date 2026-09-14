@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>多重月亮高度角與方位角觀測記錄表</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -259,6 +259,7 @@
             align-items: center;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
             touch-action: none;
             z-index: 20;
         }
@@ -297,6 +298,7 @@
             text-align: center;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
         .moon-icon:active { cursor: grabbing; }
     </style>
@@ -548,11 +550,12 @@
             chart.appendChild(moonItem);
         }
 
+        // --- 修正 Safari 與觸控拖曳機制 ---
         const chart = document.getElementById('chart');
         let activeMoonItem = null;
         let isDragging = false;
 
-        document.addEventListener('pointerdown', (e) => {
+        function startDrag(e) {
             if (isPenActive) return;
             if (e.target.tagName === 'INPUT') return;
 
@@ -560,37 +563,54 @@
             if (item) {
                 isDragging = true;
                 activeMoonItem = item;
-                item.setPointerCapture(e.pointerId);
-                e.preventDefault(); 
             }
-        });
+        }
 
-        document.addEventListener('pointermove', (e) => {
+        function moveDrag(e) {
             if (!isDragging || !activeMoonItem || isPenActive) return;
+            
+            // 阻擋 Safari 預設的整頁滑動行為
+            if (e.cancelable) e.preventDefault();
+
             const rect = chart.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            let x = clientX - rect.left;
+            let y = clientY - rect.top;
 
             x = Math.max(0, Math.min(x, chartWidth));
             y = Math.max(0, Math.min(y, chartHeight));
 
             activeMoonItem.style.left = (x - 31) + 'px';
             activeMoonItem.style.top = (y - 41) + 'px';
-        });
+        }
 
-        const stopDrag = (e) => {
-            if (isDragging && activeMoonItem) {
-                try {
-                    activeMoonItem.releasePointerCapture(e.pointerId);
-                } catch(err){}
-                isDragging = false;
-                activeMoonItem = null;
+        function stopDrag() {
+            isDragging = false;
+            activeMoonItem = null;
+        }
+
+        // 滑鼠事件監聽
+        document.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', stopDrag);
+
+        // Safari 觸控事件監聽 (必須帶入 { passive: false } 才能在 Safari 停用預設滾動)
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            const item = e.target.closest('.moon-item');
+            if (item && !isPenActive) {
+                if (e.cancelable) e.preventDefault();
+                startDrag(e);
             }
-        };
+        }, { passive: false });
 
-        document.addEventListener('pointerup', stopDrag);
-        document.addEventListener('pointercancel', stopDrag);
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', stopDrag);
+        document.addEventListener('touchcancel', stopDrag);
 
+        // 雙擊刪除月亮
         document.addEventListener('dblclick', (e) => {
             if (isPenActive || e.target.tagName === 'INPUT') return;
 
@@ -600,6 +620,7 @@
             }
         });
 
+        // --- 畫筆機制 ---
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isPenActive = false;
@@ -667,8 +688,20 @@
         canvas.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', stopDrawing);
 
-        canvas.addEventListener('touchstart', (e) => { startDrawing(e); e.preventDefault(); });
-        canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
+        canvas.addEventListener('touchstart', (e) => { 
+            if (isPenActive) {
+                startDrawing(e); 
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => { 
+            if (isPenActive) {
+                draw(e); 
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
         window.addEventListener('touchend', stopDrawing);
 
         function clearCanvas() {
