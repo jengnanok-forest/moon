@@ -70,43 +70,18 @@
             color: white;
             box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3);
         }
-        .btn-rand:hover {
-            background-color: #732d91;
-        }
-        .btn-rand:active {
-            transform: translateY(1px);
-        }
-        .btn-pen {
-            background-color: #f39c12;
-            color: white;
-        }
-        .btn-pen.active {
-            background-color: #d35400;
-        }
-        .btn-pen:hover {
-            opacity: 0.9;
-        }
-        .btn-clear-draw {
-            background-color: #6c757d;
-            color: white;
-        }
-        .btn-clear-draw:hover {
-            background-color: #5a6268;
-        }
-        .btn-add {
-            background-color: #008CBA;
-            color: white;
-        }
-        .btn-add:hover {
-            background-color: #007399;
-        }
-        .btn-export {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .btn-export:hover {
-            background-color: #45a049;
-        }
+        .btn-rand:hover { background-color: #732d91; }
+        .btn-rand:active { transform: translateY(1px); }
+        .btn-pen { background-color: #f39c12; color: white; }
+        .btn-pen.active { background-color: #d35400; }
+        .btn-pen:hover { opacity: 0.9; }
+        .btn-clear-draw { background-color: #6c757d; color: white; }
+        .btn-clear-draw:hover { background-color: #5a6268; }
+        .btn-add { background-color: #008CBA; color: white; }
+        .btn-add:hover { background-color: #007399; }
+        .btn-export { background-color: #4CAF50; color: white; }
+        .btn-export:hover { background-color: #45a049; }
+        
         .color-picker-group {
             display: flex;
             align-items: center;
@@ -122,9 +97,7 @@
             box-shadow: 0 0 0 1px #ccc;
             transition: transform 0.1s;
         }
-        .color-dot:hover {
-            transform: scale(1.15);
-        }
+        .color-dot:hover { transform: scale(1.15); }
         input[type="color"] {
             padding: 0;
             width: 28px;
@@ -142,7 +115,6 @@
             margin-top: 2px;
         }
         
-        /* 記錄表主體區塊 */
         #export-area-wrapper {
             width: 100%;
             max-width: 900px;
@@ -166,13 +138,8 @@
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
         }
-        h2 {
-            text-align: center;
-            margin-top: 0;
-            color: #2c3e50;
-        }
+        h2 { text-align: center; margin-top: 0; color: #2c3e50; }
 
-        /* 觀測表格 */
         .obs-table {
             width: 100%;
             border-collapse: collapse;
@@ -195,7 +162,6 @@
             letter-spacing: 2px;
         }
 
-        /* 圖表區域外框 */
         .chart-wrapper {
             position: relative;
             width: 800px;
@@ -212,6 +178,7 @@
             border-bottom: 2px solid white;
             box-sizing: border-box;
             overflow: visible;
+            touch-action: none;
         }
 
         #drawingCanvas {
@@ -220,6 +187,7 @@
             left: 0;
             z-index: 5;
             pointer-events: none;
+            touch-action: none;
         }
         #drawingCanvas.active-draw {
             z-index: 15;
@@ -280,6 +248,7 @@
             font-size: 45px;
             pointer-events: none;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         .moon-item {
@@ -289,6 +258,8 @@
             flex-direction: column;
             align-items: center;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
             z-index: 20;
         }
 
@@ -324,10 +295,10 @@
             cursor: grab;
             text-shadow: 0 0 15px rgba(255,255,255,0.8);
             text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .moon-icon:active {
-            cursor: grabbing;
-        }
+        .moon-icon:active { cursor: grabbing; }
     </style>
 </head>
 <body>
@@ -581,7 +552,7 @@
         let activeMoonItem = null;
         let isDragging = false;
 
-        document.addEventListener('mousedown', (e) => {
+        document.addEventListener('pointerdown', (e) => {
             if (isPenActive) return;
             if (e.target.tagName === 'INPUT') return;
 
@@ -589,11 +560,12 @@
             if (item) {
                 isDragging = true;
                 activeMoonItem = item;
+                item.setPointerCapture(e.pointerId);
                 e.preventDefault(); 
             }
         });
 
-        document.addEventListener('mousemove', (e) => {
+        document.addEventListener('pointermove', (e) => {
             if (!isDragging || !activeMoonItem || isPenActive) return;
             const rect = chart.getBoundingClientRect();
             let x = e.clientX - rect.left;
@@ -606,12 +578,18 @@
             activeMoonItem.style.top = (y - 41) + 'px';
         });
 
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
+        const stopDrag = (e) => {
+            if (isDragging && activeMoonItem) {
+                try {
+                    activeMoonItem.releasePointerCapture(e.pointerId);
+                } catch(err){}
                 isDragging = false;
                 activeMoonItem = null;
             }
-        });
+        };
+
+        document.addEventListener('pointerup', stopDrag);
+        document.addEventListener('pointercancel', stopDrag);
 
         document.addEventListener('dblclick', (e) => {
             if (isPenActive || e.target.tagName === 'INPUT') return;
@@ -749,7 +727,6 @@
             });
         }
 
-        /* 雙重保險初始化邏輯：支援嵌入式 iframe/右側預覽視窗與獨立網頁 */
         function initApp() {
             initGrid();
             generateRandomData();
