@@ -162,11 +162,24 @@
             letter-spacing: 2px;
         }
 
+        /* 統計圖上方的月相選擇工具列 */
+        .moon-select-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background-color: #eef5f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #d0e1fd;
+        }
+
         .chart-wrapper {
             position: relative;
             width: 800px;
             height: 540px;
-            margin: 50px auto 50px 50px;
+            margin: 30px auto 50px 50px;
         }
         
         .chart-container {
@@ -264,7 +277,7 @@
             z-index: 20;
         }
 
-        /* 刪除月亮按鈕設計 */
+        /* 刪除月亮按鈕 */
         .moon-delete-btn {
             position: absolute;
             top: -8px;
@@ -371,21 +384,10 @@
 
         <div class="control-row row-right">
             <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
-            <select id="phaseSelect">
-                <option value="🌕">🌕 滿月 (望)</option>
-                <option value="🌖">🌖 虧凸月</option>
-                <option value="🌗">🌗 下弦月</option>
-                <option value="🌘">🌘 殘月</option>
-                <option value="🌑">🌑 新月 (朔)</option>
-                <option value="🌒">🌒 眉月</option>
-                <option value="🌓">🌓 上弦月</option>
-                <option value="🌔">🌔 盈凸月</option>
-            </select>
-            <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
             <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
         </div>
 
-        <div class="hint">💡 提示：選擇月相後點擊「➕ 加入新月亮」；關閉畫筆後可拖曳月亮，點擊月亮右上角的「×」即可刪除。</div>
+        <div class="hint">💡 提示：在觀測統計圖上方選擇月相並點擊「➕ 加入新月亮」；啟用畫筆可在圖上手繪軌跡，關閉畫筆後可拖曳月亮，點擊月亮右上角的「×」即可刪除。</div>
     </div>
 
     <div id="export-area-wrapper">
@@ -424,6 +426,22 @@
                 </tr>
             </table>
             
+            <!-- 搬移至此：橫軸縱軸統計圖正上方的月相選擇列 -->
+            <div class="moon-select-bar">
+                <label for="phaseSelect" style="font-weight: bold; font-size: 15px; color: #2c3e50;">選擇月相：</label>
+                <select id="phaseSelect">
+                    <option value="🌕">🌕 滿月 (望)</option>
+                    <option value="🌖">🌖 虧凸月</option>
+                    <option value="🌗">🌗 下弦月</option>
+                    <option value="🌘">🌘 殘月</option>
+                    <option value="🌑">🌑 新月 (朔)</option>
+                    <option value="🌒">🌒 眉月</option>
+                    <option value="🌓">🌓 上弦月</option>
+                    <option value="🌔">🌔 盈凸月</option>
+                </select>
+                <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
+            </div>
+
             <div class="chart-wrapper">
                 <div id="y-axis-labels"></div>
                 <div class="chart-container" id="chart">
@@ -638,7 +656,7 @@
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', stopDrag);
 
-        // 觸控事件監聽 (修正 Mobile Safari 滑動)
+        // 觸控事件監聽
         document.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
             const item = e.target.closest('.moon-item');
@@ -771,6 +789,10 @@
                 onclone: (clonedDoc) => {
                     const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
                     if (clonedWrapper) clonedWrapper.scrollLeft = 0;
+
+                    // 匯出圖檔時，自動隱藏圖表上方的月相選擇工具列
+                    const clonedSelectBar = clonedDoc.querySelector('.moon-select-bar');
+                    if (clonedSelectBar) clonedSelectBar.remove();
 
                     // 匯出時隱藏所有「×」刪除按鈕
                     const clonedDelBtns = clonedDoc.querySelectorAll('.moon-delete-btn');
