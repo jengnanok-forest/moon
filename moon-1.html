@@ -45,13 +45,13 @@
             z-index: 5;
         }
 
-        /* 右側控制面板 */
+        /* 右側控制面板（寬度縮小30%至 224px） */
         #sidebar {
-            width: 320px;
+            width: 224px;
             height: 100%;
             background-color: #f7fafc;
             border-left: 2px solid #e2e8f0;
-            padding: 20px;
+            padding: 15px 12px;
             display: flex;
             flex-direction: column;
             z-index: 10;
@@ -61,39 +61,39 @@
         }
 
         h2 {
-            font-size: 20px;
+            font-size: 17px;
             color: #2d3748;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-weight: 700;
             border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .data-group {
             background-color: white;
             border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 12px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
             border: 1px solid #edf2f7;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .data-label {
-            font-size: 13px;
+            font-size: 12px;
             color: #718096;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-weight: bold;
         }
 
         .data-value {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: bold;
             color: #2d3748;
         }
 
         .data-sub {
-            font-size: 13px;
+            font-size: 11px;
             color: #a0aec0;
             margin-top: 3px;
         }
@@ -101,11 +101,11 @@
         /* 狀態標籤 */
         #status-badge {
             display: inline-block;
-            padding: 5px 12px;
+            padding: 4px 10px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 14px;
-            margin-top: 5px;
+            font-size: 13px;
+            margin-top: 4px;
             text-align: center;
         }
 
@@ -129,14 +129,14 @@
         /* 繪圖工具樣式 */
         .draw-tools {
             display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
         .tool-btn {
             flex: 1;
-            padding: 8px 4px;
-            font-size: 13px;
+            padding: 6px 2px;
+            font-size: 12px;
             margin-top: 0;
             background-color: #edf2f7;
             border: 1px solid #cbd5e0;
@@ -156,15 +156,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 4px;
+            padding: 5px 4px;
             background-color: #f7fafc;
             border-radius: 6px;
             border: 1px solid #e2e8f0;
         }
 
         .color-dot {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid #cbd5e0;
@@ -176,9 +176,9 @@
         }
 
         .color-dot.active {
-            border: 3px solid #2d3748;
-            transform: scale(1.25);
-            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+            border: 2px solid #2d3748;
+            transform: scale(1.2);
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
         /* 控制按鈕 */
@@ -186,13 +186,13 @@
             background-color: #edf2f7;
             color: #2d3748;
             border: 1px solid #cbd5e0;
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
-            font-size: 15px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
         button:hover {
@@ -207,38 +207,17 @@
         .checkbox-container {
             display: flex;
             align-items: center;
-            margin: 10px 0;
+            margin: 8px 0;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             color: #4a5568;
         }
 
         .checkbox-container input {
-            margin-right: 8px;
-            width: 16px;
-            height: 16px;
+            margin-right: 6px;
+            width: 15px;
+            height: 15px;
             cursor: pointer;
-        }
-
-        /* 操作指南說明書 */
-        #instructions {
-            margin-top: 15px;
-            background-color: #ebf8ff;
-            border-radius: 8px;
-            padding: 12px;
-            border-left: 4px solid #3182ce;
-        }
-
-        #instructions h4 {
-            color: #2b6cb0;
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-
-        #instructions p {
-            font-size: 12px;
-            color: #2b6cb0;
-            line-height: 1.5;
         }
 
         /* SVG 畫布及元素 */
@@ -319,11 +298,11 @@
                 <circle cx="0" cy="0" r="40" fill="transparent" />
             </g>
 
-            <!-- 量角器組件 (左右相反版：面向右側) -->
+            <!-- 量角器組件 (面向右側) -->
             <g id="protractor-group">
-                <!-- 旋轉組件 (視管、刻度盤、卡通眼睛一併旋轉) -->
+                <!-- 旋轉組件 -->
                 <g id="rotatable-parts" class="draggable">
-                    <!-- 半圓刻度盤本體 (向右半圓) -->
+                    <!-- 半圓刻度盤本體 -->
                     <path d="M 0,-160 A 160,160 0 0,1 0,160 Z" fill="#e2e8f0" stroke="#4a5568" stroke-width="2" opacity="0.95" />
                     <line x1="0" y1="-160" x2="0" y2="160" stroke="#4a5568" stroke-width="2" />
 
@@ -334,19 +313,19 @@
                     <path d="M 130,-120 L 140,-125 L 135,-115 Z" fill="#e53e3e" />
                     <path d="M 130,120 L 140,125 L 135,115 Z" fill="#e53e3e" />
 
-                    <!-- 藍色觀測視管 (向右延伸，重疊在量角器盤面表面) -->
+                    <!-- 藍色觀測視管 -->
                     <rect x="0" y="-14" width="185" height="28" rx="4" fill="#3182ce" stroke="#2b6cb0" stroke-width="2" opacity="0.95" />
                     <!-- 觀測視管內視線 -->
                     <line x1="0" y1="0" x2="185" y2="0" stroke="#90cdf4" stroke-width="1" stroke-dasharray="2,2" />
 
-                    <!-- 雙眼 (卡通眼球) 移到右端，疊加於最上層 -->
+                    <!-- 雙眼 (卡通眼球) -->
                     <circle cx="155" cy="-8" r="7" fill="white" stroke="#2d3748" stroke-width="1.5" />
                     <circle cx="155" cy="-8" r="3" fill="black" />
                     <circle cx="155" cy="8" r="7" fill="white" stroke="#2d3748" stroke-width="1.5" />
                     <circle cx="155" cy="8" r="3" fill="black" />
                 </g>
 
-                <!-- 鉛錘線 (始終保持垂直向下) -->
+                <!-- 鉛錘線 -->
                 <g id="plumb-group">
                     <line x1="0" y1="0" x2="0" y2="145" stroke="#1a202c" stroke-width="3" />
                     <polygon points="0,154 -6,142 6,142" fill="#1a202c" />
@@ -362,7 +341,7 @@
         <div class="data-group">
             <div class="data-label">月亮高度角 (仰角)</div>
             <div class="data-value" id="val-altitude">0.0°</div>
-            <div class="data-sub" id="val-protractor-info">量角器視管仰角: 0.0°</div>
+            <div class="data-sub" id="val-protractor-info">視管仰角: 0.0°</div>
         </div>
 
         <div class="data-group">
@@ -384,7 +363,7 @@
                 <div class="color-dot" data-color="#3182ce" style="background-color: #3182ce;" title="藍色"></div>
                 <div class="color-dot" data-color="#ffffff" style="background-color: #ffffff;" title="白色"></div>
             </div>
-            <button id="btn-clear-draw" style="width: 100%; font-size: 13px; margin-top: 8px;">🗑️ 清除所有註記</button>
+            <button id="btn-clear-draw" style="width: 100%; font-size: 12px; margin-top: 6px;">🗑️ 清除註記</button>
         </div>
 
         <label class="checkbox-container">
@@ -393,15 +372,6 @@
         </label>
 
         <button id="btn-reset">重置位置</button>
-
-        <div id="instructions">
-            <h4>【使用操作說明】</h4>
-            <p>
-                1. <b>拖動月亮/觀測器</b>：切換至「🖐️ 操作」模式，拖動月亮或藍色視管。<br><br>
-                2. <b>螢幕註記</b>：切換至「✏️ 畫筆」模式（或直接點擊顏色），可在天空畫面上直接繪圖、標記重點。<br><br>
-                3. <b>讀取角度</b>：當視管對準月亮時，鉛錘線垂直指向的角度即為高度角。
-            </p>
-        </div>
     </div>
 
     <script>
@@ -546,7 +516,7 @@
                 statusBadge.textContent = "未對準 ❌";
                 statusBadge.className = "status-unaligned";
             }
-            valProtractorInfo.textContent = `量角器視管仰角: ${protractorAngle.toFixed(1)}° (目標仰角: ${targetAngle.toFixed(1)}°)`;
+            valProtractorInfo.textContent = `視管仰角: ${protractorAngle.toFixed(1)}° (目標仰角: ${targetAngle.toFixed(1)}°)`;
         }
 
         /* 修正相容 Safari 的滑鼠/觸控座標計算 */
@@ -676,7 +646,7 @@
             ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         });
 
-        /* 事件監聽註冊 (增加 passive: false 以允許 preventDefault) */
+        /* 事件監聽註冊 */
         drawCanvas.addEventListener('mousedown', startDrawing);
         drawCanvas.addEventListener('mousemove', draw);
         drawCanvas.addEventListener('mouseup', stopDrawing);
