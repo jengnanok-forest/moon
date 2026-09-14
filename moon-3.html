@@ -350,32 +350,33 @@
             </div>
             <div class="input-group">
                 <label>地點:</label>
-                <input type="text" id="locInput" placeholder="例如: 學校操場" onchange="updateInfo()" onkeyup="updateInfo()">
+                <input type="text" id="locInput" style="width: 130px;" placeholder="例如: 操場" onchange="updateInfo()" onkeyup="updateInfo()">
             </div>
-        </div>
-
-        <div class="control-row">
             <div class="input-group">
                 <label>記錄者:</label>
-                <input type="text" id="nameInput" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
-            </div>
-            <div class="v-divider"></div>
-            <button type="button" id="btnTogglePen" class="btn-pen" onclick="togglePen()">✏️ 啟用畫筆</button>
-            <button type="button" class="btn-clear-draw" onclick="clearCanvas()">🧹 清除註記</button>
-            <div class="color-picker-group">
-                <label>顏色:</label>
-                <span class="color-dot" style="background:#ff3b30;" onclick="setColor('#ff3b30')"></span>
-                <span class="color-dot" style="background:#ffcc00;" onclick="setColor('#ffcc00')"></span>
-                <span class="color-dot" style="background:#00d4ff;" onclick="setColor('#00d4ff')"></span>
-                <span class="color-dot" style="background:#76ff03;" onclick="setColor('#76ff03')"></span>
-                <span class="color-dot" style="background:#ffffff;" onclick="setColor('#ffffff')"></span>
-                <input type="color" id="drawColor" value="#ff3b30" onchange="setColor(this.value)">
+                <input type="text" id="nameInput" style="width: 100px;" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
             </div>
         </div>
 
-        <div class="control-row row-right">
-            <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
-            <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
+        <div class="control-row" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="btnTogglePen" class="btn-pen" onclick="togglePen()">✏️ 啟用畫筆</button>
+                <button type="button" class="btn-clear-draw" onclick="clearCanvas()">🧹 清除註記</button>
+                <div class="color-picker-group">
+                    <label>顏色:</label>
+                    <span class="color-dot" style="background:#ff3b30;" onclick="setColor('#ff3b30')"></span>
+                    <span class="color-dot" style="background:#ffcc00;" onclick="setColor('#ffcc00')"></span>
+                    <span class="color-dot" style="background:#00d4ff;" onclick="setColor('#00d4ff')"></span>
+                    <span class="color-dot" style="background:#76ff03;" onclick="setColor('#76ff03')"></span>
+                    <span class="color-dot" style="background:#ffffff;" onclick="setColor('#ffffff')"></span>
+                    <input type="color" id="drawColor" value="#ff3b30" onchange="setColor(this.value)">
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-rand" onclick="generateRandomData()">🎲 重新產生數據</button>
+                <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
+            </div>
         </div>
     </div>
 
