@@ -264,6 +264,35 @@
             z-index: 20;
         }
 
+        /* 刪除月亮按鈕設計 */
+        .moon-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            line-height: 18px;
+            padding: 0;
+            background-color: #ff3b30;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .moon-delete-btn:hover {
+            background-color: #d32f2f;
+            transform: scale(1.15);
+        }
+
         .moon-time {
             width: 62px;
             height: 22px;
@@ -356,7 +385,7 @@
             <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
         </div>
 
-        <div class="hint">💡 提示：點擊「🎲 重新產生數據」；啟用畫筆可在圖上手繪軌跡，關閉畫筆後可拖曳月亮或雙擊刪除月亮。</div>
+        <div class="hint">💡 提示：選擇月相後點擊「➕ 加入新月亮」；關閉畫筆後可拖曳月亮，點擊月亮右上角的「×」即可刪除。</div>
     </div>
 
     <div id="export-area-wrapper">
@@ -401,10 +430,6 @@
                     <canvas id="drawingCanvas" width="800" height="540"></canvas>
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
-                    </div>
-                    <div class="moon-item" style="left: -31px; top: 499px;">
-                        <input type="text" class="moon-time" placeholder="時間" value="18:00">
-                        <div class="moon-icon">🌕</div>
                     </div>
                 </div>
                 <div id="x-axis-labels"></div>
@@ -533,31 +558,49 @@
 
             const moonItem = document.createElement('div');
             moonItem.className = 'moon-item';
-            moonItem.style.left = '-31px';
-            moonItem.style.top = '499px';
+            moonItem.style.left = '10px';
+            moonItem.style.top = '460px';
 
+            // 刪除按鈕
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'moon-delete-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = '刪除月亮';
+            
+            const deleteAction = (e) => {
+                e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
+                moonItem.remove();
+            };
+            delBtn.addEventListener('click', deleteAction);
+            delBtn.addEventListener('touchstart', deleteAction, { passive: false });
+
+            // 時間輸入框
             const timeInput = document.createElement('input');
             timeInput.type = 'text';
             timeInput.className = 'moon-time';
             timeInput.placeholder = '時間';
 
+            // 月相圖示
             const moonIcon = document.createElement('div');
             moonIcon.className = 'moon-icon';
             moonIcon.innerText = phase;
 
+            moonItem.appendChild(delBtn);
             moonItem.appendChild(timeInput);
             moonItem.appendChild(moonIcon);
             chart.appendChild(moonItem);
         }
 
-        // --- 修正 Safari 與觸控拖曳機制 ---
+        // --- 拖曳與互動控制 ---
         const chart = document.getElementById('chart');
         let activeMoonItem = null;
         let isDragging = false;
 
         function startDrag(e) {
             if (isPenActive) return;
-            if (e.target.tagName === 'INPUT') return;
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
 
             const item = e.target.closest('.moon-item');
             if (item) {
@@ -569,7 +612,6 @@
         function moveDrag(e) {
             if (!isDragging || !activeMoonItem || isPenActive) return;
             
-            // 阻擋 Safari 預設的整頁滑動行為
             if (e.cancelable) e.preventDefault();
 
             const rect = chart.getBoundingClientRect();
@@ -596,9 +638,9 @@
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', stopDrag);
 
-        // Safari 觸控事件監聽 (必須帶入 { passive: false } 才能在 Safari 停用預設滾動)
+        // 觸控事件監聽 (修正 Mobile Safari 滑動)
         document.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === 'INPUT') return;
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
             const item = e.target.closest('.moon-item');
             if (item && !isPenActive) {
                 if (e.cancelable) e.preventDefault();
@@ -610,9 +652,9 @@
         document.addEventListener('touchend', stopDrag);
         document.addEventListener('touchcancel', stopDrag);
 
-        // 雙擊刪除月亮
+        // 雙擊刪除備用機制
         document.addEventListener('dblclick', (e) => {
-            if (isPenActive || e.target.tagName === 'INPUT') return;
+            if (isPenActive || e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
 
             const item = e.target.closest('.moon-item');
             if (item) {
@@ -708,6 +750,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
+        // 匯出圖檔
         function exportToImage() {
             const captureArea = document.getElementById('export-area');
             const wrapper = document.getElementById('export-area-wrapper');
@@ -728,6 +771,10 @@
                 onclone: (clonedDoc) => {
                     const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
                     if (clonedWrapper) clonedWrapper.scrollLeft = 0;
+
+                    // 匯出時隱藏所有「×」刪除按鈕
+                    const clonedDelBtns = clonedDoc.querySelectorAll('.moon-delete-btn');
+                    clonedDelBtns.forEach(b => b.remove());
 
                     const timeInputs = clonedDoc.querySelectorAll('input.moon-time');
                     timeInputs.forEach(input => {
