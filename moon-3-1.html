@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多重月亮高度角與方位角觀測記錄表</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        input, select, button {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        button {
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-pen { background-color: #f39c12; color: white; }
+        .btn-pen.active { background-color: #d35400; }
+        .btn-pen:hover { opacity: 0.9; }
+        .btn-clear-draw { background-color: #6c757d; color: white; }
+        .btn-clear-draw:hover { background-color: #5a6268; }
+        .btn-add { background-color: #008CBA; color: white; }
+        .btn-add:hover { background-color: #007399; }
+        .btn-export { background-color: #4CAF50; color: white; }
+        .btn-export:hover { background-color: #45a049; }
+        
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .color-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #ccc;
+            transition: transform 0.1s;
+        }
+        .color-dot:hover { transform: scale(1.15); }
+        input[type="color"] {
+            padding: 0;
+            width: 28px;
+            height: 28px;
+            border: 2px solid #aaa;
+            border-radius: 4px;
+            cursor: pointer;
+            background: none;
+        }
+        
+        #export-area-wrapper {
+            width: 100%;
+            max-width: 900px;
+            overflow-x: auto;
+        }
+        #export-area {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            min-width: 850px;
+            box-sizing: border-box;
+            overflow: visible;
+        }
+        .record-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 { text-align: center; margin-top: 0; color: #2c3e50; }
+
+        .obs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            background-color: #ffffff;
+        }
+        .obs-table th, .obs-table td {
+            border: 1.5px solid #000000;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 17px;
+            color: #000000;
+            box-sizing: border-box;
+            height: 48px;
+            vertical-align: middle;
+        }
+        .obs-table th {
+            font-weight: bold;
+            background-color: #f8f9fa;
+            letter-spacing: 1px;
+            line-height: 1.3;
+        }
+        .obs-table select {
+            width: 92%;
+            padding: 6px 4px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            text-align-last: center;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .obs-table select:focus {
+            border-color: #008CBA;
+            outline: none;
+        }
+
+        .moon-select-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background-color: #eef5f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #d0e1fd;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 800px;
+            height: 540px;
+            margin: 30px auto 50px 50px;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+            border-left: 2px solid white;
+            border-bottom: 2px solid white;
+            box-sizing: border-box;
+            overflow: visible;
+            touch-action: none;
+        }
+
+        #drawingCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            pointer-events: none;
+            touch-action: none;
+        }
+        #drawingCanvas.active-draw {
+            z-index: 15;
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+        
+        .grid-line-x, .grid-line-y {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+        }
+        .grid-line-x { width: 1px; height: 100%; }
+        .grid-line-y { width: 100%; height: 1px; }
+        
+        #y-axis-labels {
+            position: absolute;
+            left: -45px;
+            top: 0;
+            width: 40px;
+            height: 100%;
+            pointer-events: none;
+        }
+        .y-label {
+            position: absolute;
+            width: 100%;
+            text-align: right;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            transform: translateY(-50%);
+        }
+
+        #x-axis-labels {
+            position: absolute;
+            bottom: -35px;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            pointer-events: none;
+        }
+        .x-label {
+            position: absolute;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            transform: translateX(-50%);
+        }
+
+        .landscape {
+            position: absolute;
+            bottom: -5px;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            font-size: 45px;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .moon-item {
+            position: absolute;
+            width: 62px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+            z-index: 20;
+        }
+
+        .moon-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            line-height: 18px;
+            padding: 0;
+            background-color: #ff3b30;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .moon-delete-btn:hover {
+            background-color: #d32f2f;
+            transform: scale(1.15);
+        }
+
+        .moon-time {
+            width: 62px;
+            height: 22px;
+            line-height: 20px;
+            padding: 0;
+            margin: 0 0 2px 0;
+            font-size: 12px;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            background: #ffffff;
+            color: #2c3e50;
+            font-weight: bold;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 21;
+            box-sizing: border-box;
+            display: block;
+        }
+        .moon-time:focus {
+            background: #ffffff;
+            border-color: #008CBA;
+        }
+
+        .moon-icon {
+            font-size: 35px;
+            line-height: 35px;
+            height: 35px;
+            cursor: grab;
+            text-shadow: 0 0 15px rgba(255,255,255,0.8);
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .moon-icon:active { cursor: grabbing; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <div class="control-row">
+            <div class="input-group">
+                <label>日期:</label>
+                <input type="date" id="dateInput" onchange="updateInfo()">
+            </div>
+            <div class="input-group">
+                <label>時間:</label>
+                <input type="time" id="timeInput">
+            </div>
+            <div class="input-group">
+                <label>地點:</label>
+                <input type="text" id="locInput" style="width: 130px;" placeholder="例如: 操場" onchange="updateInfo()" onkeyup="updateInfo()">
+            </div>
+            <div class="input-group">
+                <label>記錄者:</label>
+                <input type="text" id="nameInput" style="width: 100px;" placeholder="您的姓名" onchange="updateInfo()" onkeyup="updateInfo()">
+            </div>
+        </div>
+
+        <div class="control-row" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="btnTogglePen" class="btn-pen" onclick="togglePen()">✏️ 啟用畫筆</button>
+                <button type="button" class="btn-clear-draw" onclick="clearCanvas()">🧹 清除註記</button>
+                <div class="color-picker-group">
+                    <label>顏色:</label>
+                    <span class="color-dot" style="background:#ff3b30;" onclick="setColor('#ff3b30')"></span>
+                    <span class="color-dot" style="background:#ffcc00;" onclick="setColor('#ffcc00')"></span>
+                    <span class="color-dot" style="background:#00d4ff;" onclick="setColor('#00d4ff')"></span>
+                    <span class="color-dot" style="background:#76ff03;" onclick="setColor('#76ff03')"></span>
+                    <span class="color-dot" style="background:#ffffff;" onclick="setColor('#ffffff')"></span>
+                    <input type="color" id="drawColor" value="#ff3b30" onchange="setColor(this.value)">
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-export" onclick="exportToImage()">📥 匯出成圖檔</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-area-wrapper">
+        <div id="export-area">
+            <h2>月亮高度角與方位角觀測記錄</h2>
+            <div class="record-info">
+                <span id="dispDate">日期: ____________</span>
+                <span id="dispLoc">地點: ____________</span>
+                <span id="dispName">記錄者: ____________</span>
+            </div>
+
+            <table class="obs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 16%;">時 間</th>
+                        <th style="width: 20%;">月 亮 方 位</th>
+                        <th style="width: 24%;">月 亮 高 度 角<br><span style="font-size: 14px; font-weight: normal;">（用拳頭數）</span></th>
+                        <th style="width: 24%;">月 亮 高 度 角<br><span style="font-size: 14px; font-weight: normal;">（用觀測器）</span></th>
+                        <th style="width: 16%;">畫 出 月 形</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 19px;">18 : 00</td>
+                        <td>
+                            <select class="table-dir-select">
+                                <option value="">請選擇</option>
+                                <option value="東">東</option>
+                                <option value="東南">東南</option>
+                                <option value="南">南</option>
+                                <option value="西南">西南</option>
+                                <option value="西">西</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-fist-select">
+                                <option value="">請選擇</option>
+                                <option value="0個拳頭 (0°)">0 個 (0°)</option>
+                                <option value="1個拳頭 (10°)">1 個 (10°)</option>
+                                <option value="2個拳頭 (20°)">2 個 (20°)</option>
+                                <option value="3個拳頭 (30°)">3 個 (30°)</option>
+                                <option value="4個拳頭 (40°)">4 個 (40°)</option>
+                                <option value="5個拳頭 (50°)">5 個 (50°)</option>
+                                <option value="6個拳頭 (60°)">6 個 (60°)</option>
+                                <option value="7個拳頭 (70°)">7 個 (70°)</option>
+                                <option value="8個拳頭 (80°)">8 個 (80°)</option>
+                                <option value="9個拳頭 (90°)">9 個 (90°)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-alt-select">
+                                <option value="">請選擇</option>
+                                <option value="0°">0°</option>
+                                <option value="10°">10°</option>
+                                <option value="20°">20°</option>
+                                <option value="30°">30°</option>
+                                <option value="40°">40°</option>
+                                <option value="50°">50°</option>
+                                <option value="60°">60°</option>
+                                <option value="70°">70°</option>
+                                <option value="80°">80°</option>
+                                <option value="90°">90°</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-shape-select">
+                                <option value="">請選擇</option>
+                                <option value="🌕 滿月">🌕 滿月</option>
+                                <option value="🌖 虧凸月">🌖 虧凸月</option>
+                                <option value="🌗 下弦月">🌗 下弦月</option>
+                                <option value="🌘 殘月">🌘 殘月</option>
+                                <option value="🌑 新月">🌑 新月</option>
+                                <option value="🌒 眉月">🌒 眉月</option>
+                                <option value="🌓 上弦月">🌓 上弦月</option>
+                                <option value="🌔 盈凸月">🌔 盈凸月</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 19px;">19 : 00</td>
+                        <td>
+                            <select class="table-dir-select">
+                                <option value="">請選擇</option>
+                                <option value="東">東</option>
+                                <option value="東南">東南</option>
+                                <option value="南">南</option>
+                                <option value="西南">西南</option>
+                                <option value="西">西</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-fist-select">
+                                <option value="">請選擇</option>
+                                <option value="0個拳頭 (0°)">0 個 (0°)</option>
+                                <option value="1個拳頭 (10°)">1 個 (10°)</option>
+                                <option value="2個拳頭 (20°)">2 個 (20°)</option>
+                                <option value="3個拳頭 (30°)">3 個 (30°)</option>
+                                <option value="4個拳頭 (40°)">4 個 (40°)</option>
+                                <option value="5個拳頭 (50°)">5 個 (50°)</option>
+                                <option value="6個拳頭 (60°)">6 個 (60°)</option>
+                                <option value="7個拳頭 (70°)">7 個 (70°)</option>
+                                <option value="8個拳頭 (80°)">8 個 (80°)</option>
+                                <option value="9個拳頭 (90°)">9 個 (90°)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-alt-select">
+                                <option value="">請選擇</option>
+                                <option value="0°">0°</option>
+                                <option value="10°">10°</option>
+                                <option value="20°">20°</option>
+                                <option value="30°">30°</option>
+                                <option value="40°">40°</option>
+                                <option value="50°">50°</option>
+                                <option value="60°">60°</option>
+                                <option value="70°">70°</option>
+                                <option value="80°">80°</option>
+                                <option value="90°">90°</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-shape-select">
+                                <option value="">請選擇</option>
+                                <option value="🌕 滿月">🌕 滿月</option>
+                                <option value="🌖 虧凸月">🌖 虧凸月</option>
+                                <option value="🌗 下弦月">🌗 下弦月</option>
+                                <option value="🌘 殘月">🌘 殘月</option>
+                                <option value="🌑 新月">🌑 新月</option>
+                                <option value="🌒 眉月">🌒 眉月</option>
+                                <option value="🌓 上弦月">🌓 上弦月</option>
+                                <option value="🌔 盈凸月">🌔 盈凸月</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 19px;">20 : 00</td>
+                        <td>
+                            <select class="table-dir-select">
+                                <option value="">請選擇</option>
+                                <option value="東">東</option>
+                                <option value="東南">東南</option>
+                                <option value="南">南</option>
+                                <option value="西南">西南</option>
+                                <option value="西">西</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-fist-select">
+                                <option value="">請選擇</option>
+                                <option value="0個拳頭 (0°)">0 個 (0°)</option>
+                                <option value="1個拳頭 (10°)">1 個 (10°)</option>
+                                <option value="2個拳頭 (20°)">2 個 (20°)</option>
+                                <option value="3個拳頭 (30°)">3 個 (30°)</option>
+                                <option value="4個拳頭 (40°)">4 個 (40°)</option>
+                                <option value="5個拳頭 (50°)">5 個 (50°)</option>
+                                <option value="6個拳頭 (60°)">6 個 (60°)</option>
+                                <option value="7個拳頭 (70°)">7 個 (70°)</option>
+                                <option value="8個拳頭 (80°)">8 個 (80°)</option>
+                                <option value="9個拳頭 (90°)">9 個 (90°)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-alt-select">
+                                <option value="">請選擇</option>
+                                <option value="0°">0°</option>
+                                <option value="10°">10°</option>
+                                <option value="20°">20°</option>
+                                <option value="30°">30°</option>
+                                <option value="40°">40°</option>
+                                <option value="50°">50°</option>
+                                <option value="60°">60°</option>
+                                <option value="70°">70°</option>
+                                <option value="80°">80°</option>
+                                <option value="90°">90°</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-shape-select">
+                                <option value="">請選擇</option>
+                                <option value="🌕 滿月">🌕 滿月</option>
+                                <option value="🌖 虧凸月">🌖 虧凸月</option>
+                                <option value="🌗 下弦月">🌗 下弦月</option>
+                                <option value="🌘 殘月">🌘 殘月</option>
+                                <option value="🌑 新月">🌑 新月</option>
+                                <option value="🌒 眉月">🌒 眉月</option>
+                                <option value="🌓 上弦月">🌓 上弦月</option>
+                                <option value="🌔 盈凸月">🌔 盈凸月</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 19px;">21 : 00</td>
+                        <td>
+                            <select class="table-dir-select">
+                                <option value="">請選擇</option>
+                                <option value="東">東</option>
+                                <option value="東南">東南</option>
+                                <option value="南">南</option>
+                                <option value="西南">西南</option>
+                                <option value="西">西</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-fist-select">
+                                <option value="">請選擇</option>
+                                <option value="0個拳頭 (0°)">0 個 (0°)</option>
+                                <option value="1個拳頭 (10°)">1 個 (10°)</option>
+                                <option value="2個拳頭 (20°)">2 個 (20°)</option>
+                                <option value="3個拳頭 (30°)">3 個 (30°)</option>
+                                <option value="4個拳頭 (40°)">4 個 (40°)</option>
+                                <option value="5個拳頭 (50°)">5 個 (50°)</option>
+                                <option value="6個拳頭 (60°)">6 個 (60°)</option>
+                                <option value="7個拳頭 (70°)">7 個 (70°)</option>
+                                <option value="8個拳頭 (80°)">8 個 (80°)</option>
+                                <option value="9個拳頭 (90°)">9 個 (90°)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-alt-select">
+                                <option value="">請選擇</option>
+                                <option value="0°">0°</option>
+                                <option value="10°">10°</option>
+                                <option value="20°">20°</option>
+                                <option value="30°">30°</option>
+                                <option value="40°">40°</option>
+                                <option value="50°">50°</option>
+                                <option value="60°">60°</option>
+                                <option value="70°">70°</option>
+                                <option value="80°">80°</option>
+                                <option value="90°">90°</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-shape-select">
+                                <option value="">請選擇</option>
+                                <option value="🌕 滿月">🌕 滿月</option>
+                                <option value="🌖 虧凸月">🌖 虧凸月</option>
+                                <option value="🌗 下弦月">🌗 下弦月</option>
+                                <option value="🌘 殘月">🌘 殘月</option>
+                                <option value="🌑 新月">🌑 新月</option>
+                                <option value="🌒 眉月">🌒 眉月</option>
+                                <option value="🌓 上弦月">🌓 上弦月</option>
+                                <option value="🌔 盈凸月">🌔 盈凸月</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="moon-select-bar">
+                <label for="phaseSelect" style="font-weight: bold; font-size: 15px; color: #2c3e50;">選擇月相：</label>
+                <select id="phaseSelect">
+                    <option value="🌕">🌕 滿月 (望)</option>
+                    <option value="🌖">🌖 虧凸月</option>
+                    <option value="🌗">🌗 下弦月</option>
+                    <option value="🌘">🌘 殘月</option>
+                    <option value="🌑">🌑 新月 (朔)</option>
+                    <option value="🌒">🌒 眉月</option>
+                    <option value="🌓">🌓 上弦月</option>
+                    <option value="🌔">🌔 盈凸月</option>
+                </select>
+                <button class="btn-add" onclick="addMoon()">➕ 加入新月亮</button>
+            </div>
+
+            <div class="chart-wrapper">
+                <div id="y-axis-labels"></div>
+                <div class="chart-container" id="chart">
+                    <canvas id="drawingCanvas" width="800" height="540"></canvas>
+                    <div class="landscape">
+                        <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
+                    </div>
+                </div>
+                <div id="x-axis-labels"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartWidth = 800;
+        const chartHeight = 540;
+        const xSteps = 4; 
+        const ySteps = 18; 
+        
+        const xStepSize = chartWidth / xSteps; 
+        const yStepSize = chartHeight / ySteps; 
+
+        const directions = ['東', '東南', '南', '西南', '西'];
+
+        function initGrid() {
+            const chart = document.getElementById('chart');
+            const yLabels = document.getElementById('y-axis-labels');
+            const xLabels = document.getElementById('x-axis-labels');
+
+            if (!chart || !yLabels || !xLabels) return;
+            
+            yLabels.innerHTML = '';
+            xLabels.innerHTML = '';
+            
+            const existingGrid = chart.querySelectorAll('.grid-line-x, .grid-line-y');
+            existingGrid.forEach(el => el.remove());
+
+            for (let i = 0; i <= ySteps; i++) {
+                let degree = i * 5;
+                let topPos = chartHeight - (i * yStepSize);
+
+                if (i > 0 && i < ySteps) {
+                    let line = document.createElement('div');
+                    line.className = 'grid-line-y';
+                    line.style.top = topPos + 'px';
+                    chart.appendChild(line);
+                }
+
+                let label = document.createElement('div');
+                label.className = 'y-label';
+                label.style.top = topPos + 'px';
+                label.innerText = degree + '°';
+                yLabels.appendChild(label);
+            }
+
+            for (let i = 0; i <= xSteps; i++) {
+                let leftPos = i * xStepSize;
+
+                if (i > 0 && i < xSteps) {
+                    let line = document.createElement('div');
+                    line.className = 'grid-line-x';
+                    line.style.left = leftPos + 'px';
+                    chart.appendChild(line);
+                }
+
+                let label = document.createElement('div');
+                label.className = 'x-label';
+                label.style.left = leftPos + 'px';
+                label.innerText = directions[i];
+                xLabels.appendChild(label);
+            }
+        }
+
+        function updateInfo() {
+            document.getElementById('dispDate').innerText = '日期: ' + (document.getElementById('dateInput').value || '____________');
+            document.getElementById('dispLoc').innerText = '地點: ' + (document.getElementById('locInput').value || '____________');
+            document.getElementById('dispName').innerText = '記錄者: ' + (document.getElementById('nameInput').value || '____________');
+        }
+
+        function addMoon() {
+            const phase = document.getElementById('phaseSelect').value;
+            const chart = document.getElementById('chart');
+
+            const moonItem = document.createElement('div');
+            moonItem.className = 'moon-item';
+            moonItem.style.left = '10px';
+            moonItem.style.top = '460px';
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'moon-delete-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = '刪除月亮';
+            
+            const deleteAction = (e) => {
+                e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
+                moonItem.remove();
+            };
+            delBtn.addEventListener('click', deleteAction);
+            delBtn.addEventListener('touchstart', deleteAction, { passive: false });
+
+            const timeInput = document.createElement('input');
+            timeInput.type = 'text';
+            timeInput.className = 'moon-time';
+            timeInput.placeholder = '時間';
+
+            const moonIcon = document.createElement('div');
+            moonIcon.className = 'moon-icon';
+            moonIcon.innerText = phase;
+
+            moonItem.appendChild(delBtn);
+            moonItem.appendChild(timeInput);
+            moonItem.appendChild(moonIcon);
+            chart.appendChild(moonItem);
+        }
+
+        const chart = document.getElementById('chart');
+        let activeMoonItem = null;
+        let isDragging = false;
+
+        function startDrag(e) {
+            if (isPenActive) return;
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
+
+            const item = e.target.closest('.moon-item');
+            if (item) {
+                isDragging = true;
+                activeMoonItem = item;
+            }
+        }
+
+        function moveDrag(e) {
+            if (!isDragging || !activeMoonItem || isPenActive) return;
+            
+            if (e.cancelable) e.preventDefault();
+
+            const rect = chart.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            let x = clientX - rect.left;
+            let y = clientY - rect.top;
+
+            x = Math.max(0, Math.min(x, chartWidth));
+            y = Math.max(0, Math.min(y, chartHeight));
+
+            activeMoonItem.style.left = (x - 31) + 'px';
+            activeMoonItem.style.top = (y - 41) + 'px';
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            activeMoonItem = null;
+        }
+
+        document.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', stopDrag);
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
+            const item = e.target.closest('.moon-item');
+            if (item && !isPenActive) {
+                if (e.cancelable) e.preventDefault();
+                startDrag(e);
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', stopDrag);
+        document.addEventListener('touchcancel', stopDrag);
+
+        document.addEventListener('dblclick', (e) => {
+            if (isPenActive || e.target.tagName === 'INPUT' || e.target.classList.contains('moon-delete-btn')) return;
+
+            const item = e.target.closest('.moon-item');
+            if (item) {
+                item.remove();
+            }
+        });
+
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isPenActive = false;
+        let isDrawing = false;
+        let currentColor = '#ff3b30';
+        const strokeWidth = 5;
+
+        function togglePen() {
+            isPenActive = !isPenActive;
+            const btn = document.getElementById('btnTogglePen');
+
+            if (isPenActive) {
+                btn.innerText = '✏️ 停用畫筆';
+                btn.classList.add('active');
+                canvas.classList.add('active-draw');
+            } else {
+                btn.innerText = '✏️ 啟用畫筆';
+                btn.classList.remove('active');
+                canvas.classList.remove('active-draw');
+            }
+        }
+
+        function setColor(color) {
+            currentColor = color;
+            document.getElementById('drawColor').value = color;
+        }
+
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            if (!isPenActive) return;
+            isDrawing = true;
+            const pos = getCanvasPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function draw(e) {
+            if (!isDrawing || !isPenActive) return;
+            const pos = getCanvasPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.closePath();
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        canvas.addEventListener('touchstart', (e) => { 
+            if (isPenActive) {
+                startDrawing(e); 
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => { 
+            if (isPenActive) {
+                draw(e); 
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', stopDrawing);
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function exportToImage() {
+            const captureArea = document.getElementById('export-area');
+            const wrapper = document.getElementById('export-area-wrapper');
+            
+            const originalScrollLeft = wrapper.scrollLeft;
+            wrapper.scrollLeft = 0;
+
+            const btn = document.querySelector('.btn-export');
+            const originalText = btn.innerText;
+            btn.innerText = '處理中...';
+
+            html2canvas(captureArea, {
+                scale: 2,
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1000,
+                onclone: (clonedDoc) => {
+                    const clonedWrapper = clonedDoc.getElementById('export-area-wrapper');
+                    if (clonedWrapper) clonedWrapper.scrollLeft = 0;
+
+                    const clonedSelectBar = clonedDoc.querySelector('.moon-select-bar');
+                    if (clonedSelectBar) clonedSelectBar.remove();
+
+                    const clonedDelBtns = clonedDoc.querySelectorAll('.moon-delete-btn');
+                    clonedDelBtns.forEach(b => b.remove());
+
+                    const selects = clonedDoc.querySelectorAll('.obs-table select');
+                    selects.forEach(select => {
+                        const textDiv = clonedDoc.createElement('div');
+                        const selectedText = select.options[select.selectedIndex]?.text || '';
+                        textDiv.innerText = selectedText === '請選擇' ? '' : selectedText;
+                        textDiv.style.fontWeight = 'bold';
+                        textDiv.style.fontSize = '16px';
+                        select.parentNode.replaceChild(textDiv, select);
+                    });
+
+                    const timeInputs = clonedDoc.querySelectorAll('input.moon-time');
+                    timeInputs.forEach(input => {
+                        const textDiv = clonedDoc.createElement('div');
+                        textDiv.className = input.className;
+                        textDiv.innerText = input.value || input.placeholder || '';
+                        
+                        textDiv.style.display = 'block';
+                        textDiv.style.height = '22px';
+                        textDiv.style.lineHeight = '20px';
+                        textDiv.style.textAlign = 'center';
+                        textDiv.style.padding = '0';
+                        textDiv.style.margin = '0 0 2px 0';
+                        textDiv.style.boxSizing = 'border-box';
+                        
+                        input.parentNode.replaceChild(textDiv, input);
+                    });
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '月亮觀測軌跡_' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerText = originalText;
+                wrapper.scrollLeft = originalScrollLeft;
+            }).catch(err => {
+                alert('匯出失敗，請再試一次。');
+                btn.innerText = originalText;
+                wrapper.scrollLeft = originalScrollLeft;
+            });
+        }
+
+        function initApp() {
+            initGrid();
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initApp();
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
+    </script>
+</body>
+</html>
