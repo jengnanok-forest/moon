@@ -475,10 +475,14 @@
         }
 
         function updatePositions() {
-            const limitY = skyHeight * 0.85;
-            if (moonY > limitY) moonY = limitY;
+            // === 限制月亮移動範圍 ===
+            // 1. 水平方向：最左邊距 40px，最右不能超過觀測者位置 (obsX)，防止移到右邊
             if (moonX < 40) moonX = 40;
-            if (moonX > skyWidth - 40) moonX = skyWidth - 40;
+            if (moonX > obsX) moonX = obsX;
+
+            // 2. 垂直方向：頂部留邊距 40px，底部不能低於觀測者水平線 (obsY)，防止移到下方
+            if (moonY < 40) moonY = 40;
+            if (moonY > obsY) moonY = obsY;
 
             moonGroup.setAttribute("transform", `translate(${moonX}, ${moonY})`);
             protractorGroup.setAttribute("transform", `translate(${obsX}, ${obsY})`);
