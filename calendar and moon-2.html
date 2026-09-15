@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農曆月相對應互動學習表（密碼保護版）</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #f8fafc;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .action-bar {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-check { background-color: #10b981; color: white; }
+        .btn-check:hover { background-color: #059669; }
+
+        .btn-show { background-color: #3b82f6; color: white; }
+        .btn-show:hover { background-color: #2563eb; }
+
+        .btn-reset { background-color: #ef4444; color: white; }
+        .btn-reset:hover { background-color: #dc2626; }
+
+        .table-container {
+            background: #161e2e;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d3748;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 980px;
+        }
+
+        th, td {
+            border: 1px solid #334155;
+            text-align: center;
+            width: 130px;
+            position: relative;
+        }
+
+        .date-cell {
+            background-color: #1e293b;
+            font-size: 18px;
+            font-weight: bold;
+            color: #e2e8f0;
+            height: 42px;
+        }
+
+        .select-cell {
+            background-color: #0f172a;
+            height: 55px;
+            padding: 4px;
+        }
+
+        .empty-cell {
+            background-color: #090d16;
+        }
+
+        /* 自訂下拉選單 */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            user-select: none;
+        }
+
+        .selected-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 0 6px;
+            font-size: 13px;
+            color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .selected-box:hover {
+            border-color: #a1a1aa;
+            background-color: #273549;
+        }
+
+        .options-list {
+            position: absolute;
+            top: 105%;
+            left: 0;
+            right: 0;
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            z-index: 999;
+            display: none;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .options-list.show { display: block; }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #e2e8f0;
+            transition: background 0.15s;
+        }
+
+        .option-item:hover {
+            background-color: #334155;
+            color: #ffd700;
+        }
+
+        .custom-dropdown.correct .selected-box {
+            border: 2px solid #10b981 !important;
+            background-color: #064e3b !important;
+        }
+
+        .custom-dropdown.incorrect .selected-box {
+            border: 2px solid #ef4444 !important;
+            background-color: #7f1d1d !important;
+        }
+
+        #result-msg {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        /* 密碼視窗 Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            padding: 25px;
+            border-radius: 12px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .modal-card h3 {
+            margin-top: 0;
+            color: #ffd700;
+            font-size: 20px;
+        }
+
+        .modal-card p {
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .modal-card input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: #ffffff;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .modal-card input:focus {
+            border-color: #3b82f6;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-error {
+            color: #f87171;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>農曆月相對應學習表</h1>
+    <p class="subtitle">根據農曆日期選擇對應月相（黃色表示亮面，黑色表示暗面）：</p>
+
+    <div class="action-bar">
+        <button class="btn-check" onclick="checkAnswers()">驗證答案</button>
+        <button class="btn-show" onclick="openPasswordModal()">顯示正確解答</button>
+        <button class="btn-reset" onclick="resetForm()">重置表格</button>
+    </div>
+
+    <div class="table-container">
+        <table id="lunarTable"></table>
+    </div>
+
+    <div id="result-msg"></div>
+
+    <!-- 密碼解鎖對話視窗 -->
+    <div class="modal-overlay" id="pwdModal">
+        <div class="modal-card">
+            <h3>🌟 先想一想喔！</h3>
+            <p>先別急著看答案，再仔細思考看看～<br>相信你一定能靠自己推導出來！💪<br><br>若確實需要確認答案，請輸入密碼：</p>
+            <input type="password" id="pwdInput" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter') submitPassword()">
+            <div class="modal-btns">
+                <button class="btn-check" onclick="submitPassword()">確定解鎖</button>
+                <button class="btn-reset" onclick="closePasswordModal()">先自己想</button>
+            </div>
+            <div class="modal-error" id="pwdError"></div>
+        </div>
+    </div>
+
+    <script>
+        function getMoonSVG(phase, size = 26) {
+            const dark = "#0b0f19";
+            const light = "#FFD700";
+            const stroke = "#64748b";
+
+            if (!phase) return '';
+
+            switch(phase) {
+                case "新月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/></svg>`;
+                case "眉月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${light}"/></svg>`;
+                case "上弦月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 Z" fill="${light}"/></svg>`;
+                case "盈凸月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${dark}"/></svg>`;
+                case "滿月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/></svg>`;
+                case "虧凸月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${dark}"/></svg>`;
+                case "下弦月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 Z" fill="${light}"/></svg>`;
+                case "殘月":
+                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${light}"/></svg>`;
+                default:
+                    return '';
+            }
+        }
+
+        const moonOptions = [
+            { label: "新月 / 朔", value: "新月" },
+            { label: "眉月", value: "眉月" },
+            { label: "上弦月", value: "上弦月" },
+            { label: "盈凸月", value: "盈凸月" },
+            { label: "滿月 / 望", value: "滿月" },
+            { label: "虧凸月", value: "虧凸月" },
+            { label: "下弦月", value: "下弦月" },
+            { label: "殘月", value: "殘月" }
+        ];
+
+        const lunarData = [
+            { day: "初一", phase: "新月" }, { day: "初二", phase: "眉月" },
+            { day: "初三", phase: "眉月" }, { day: "初四", phase: "眉月" },
+            { day: "初五", phase: "眉月" }, { day: "初六", phase: "眉月" },
+            { day: "初七", phase: "上弦月" }, { day: "初八", phase: "上弦月" },
+            { day: "初九", phase: "盈凸月" }, { day: "初十", phase: "盈凸月" },
+            { day: "十一", phase: "盈凸月" }, { day: "十二", phase: "盈凸月" },
+            { day: "十三", phase: "盈凸月" }, { day: "十四", phase: "盈凸月" },
+            { day: "十五", phase: "滿月" }, { day: "十六", phase: "滿月" },
+            { day: "十七", phase: "虧凸月" }, { day: "十八", phase: "虧凸月" },
+            { day: "十九", phase: "虧凸月" }, { day: "二十(廿)", phase: "虧凸月" },
+            { day: "二十一", phase: "虧凸月" }, { day: "二十二", phase: "下弦月" },
+            { day: "二十三", phase: "下弦月" }, { day: "二十四", phase: "殘月" },
+            { day: "二十五", phase: "殘月" }, { day: "二十六", phase: "殘月" },
+            { day: "二十七", phase: "殘月" }, { day: "二十八", phase: "殘月" },
+            { day: "二十九", phase: "殘月" }, { day: "三十(卅)", phase: "新月" },
+            { day: "", phase: null }, { day: "", phase: null },
+            { day: "", phase: null }, { day: "", phase: null }, { day: "", phase: null }
+        ];
+
+        function buildTable() {
+            const table = document.getElementById("lunarTable");
+            table.innerHTML = "";
+            const colsPerRow = 7;
+            const totalRows = Math.ceil(lunarData.length / colsPerRow);
+
+            for (let r = 0; r < totalRows; r++) {
+                const dateRow = document.createElement("tr");
+                for (let c = 0; c < colsPerRow; c++) {
+                    const idx = r * colsPerRow + c;
+                    const td = document.createElement("td");
+                    td.className = "date-cell";
+                    if (idx < lunarData.length && lunarData[idx].day !== "") {
+                        td.innerText = lunarData[idx].day;
+                    } else {
+                        td.className = "empty-cell";
+                    }
+                    dateRow.appendChild(td);
+                }
+                table.appendChild(dateRow);
+
+                const selectRow = document.createElement("tr");
+                for (let c = 0; c < colsPerRow; c++) {
+                    const idx = r * colsPerRow + c;
+                    const td = document.createElement("td");
+                    td.className = "select-cell";
+
+                    if (idx < lunarData.length && lunarData[idx].day !== "") {
+                        td.appendChild(createCustomDropdown(idx, lunarData[idx].phase));
+                    } else {
+                        td.className = "empty-cell";
+                    }
+                    selectRow.appendChild(td);
+                }
+                table.appendChild(selectRow);
+            }
+        }
+
+        function createCustomDropdown(idx, answer) {
+            const container = document.createElement("div");
+            container.className = "custom-dropdown";
+            container.id = `dropdown-${idx}`;
+            container.dataset.answer = answer;
+            container.dataset.value = "";
+
+            const selectedBox = document.createElement("div");
+            selectedBox.className = "selected-box";
+            selectedBox.innerHTML = `<span>請選擇</span>`;
+
+            const optionsList = document.createElement("div");
+            optionsList.className = "options-list";
+
+            moonOptions.forEach(opt => {
+                const item = document.createElement("div");
+                item.className = "option-item";
+                item.innerHTML = `${getMoonSVG(opt.value, 22)} <span>${opt.label}</span>`;
+                
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    container.dataset.value = opt.value;
+                    selectedBox.innerHTML = `${getMoonSVG(opt.value, 24)} <span>${opt.value}</span>`;
+                    container.classList.remove("correct", "incorrect");
+                    optionsList.classList.remove("show");
+                };
+                optionsList.appendChild(item);
+            });
+
+            selectedBox.onclick = (e) => {
+                e.stopPropagation();
+                document.querySelectorAll(".options-list").forEach(el => {
+                    if (el !== optionsList) el.classList.remove("show");
+                });
+                optionsList.classList.toggle("show");
+            };
+
+            container.appendChild(selectedBox);
+            container.appendChild(optionsList);
+            return container;
+        }
+
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".options-list").forEach(el => el.classList.remove("show"));
+        });
+
+        function checkAnswers() {
+            const dropdowns = document.querySelectorAll(".custom-dropdown");
+            let correctCount = 0;
+
+            dropdowns.forEach(dp => {
+                const userChoice = dp.dataset.value;
+                const correctAnswer = dp.dataset.answer;
+
+                dp.classList.remove("correct", "incorrect");
+
+                if (userChoice === correctAnswer) {
+                    dp.classList.add("correct");
+                    correctCount++;
+                } else {
+                    dp.classList.add("incorrect");
+                }
+            });
+
+            const msgDiv = document.getElementById("result-msg");
+            if (correctCount === dropdowns.length) {
+                msgDiv.style.color = "#34d399";
+                msgDiv.innerText = `🎉 太棒了！全部回答正確！（${correctCount} / ${dropdowns.length}）`;
+            } else {
+                msgDiv.style.color = "#f87171";
+                msgDiv.innerText = `💪 答對 ${correctCount} / ${dropdowns.length} 題，紅色外框表示答錯或未答。`;
+            }
+        }
+
+        /* 密碼解鎖視窗邏輯 */
+        function openPasswordModal() {
+            document.getElementById("pwdModal").classList.add("active");
+            document.getElementById("pwdInput").value = "";
+            document.getElementById("pwdError").innerText = "";
+            document.getElementById("pwdInput").focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById("pwdModal").classList.remove("active");
+        }
+
+        function submitPassword() {
+            const inputVal = document.getElementById("pwdInput").value;
+            if (inputVal === "jsps") {
+                closePasswordModal();
+                showAnswers();
+            } else {
+                document.getElementById("pwdError").innerText = "❌ 密碼錯誤，再多思考嘗試看看喔！";
+            }
+        }
+
+        function showAnswers() {
+            const dropdowns = document.querySelectorAll(".custom-dropdown");
+            dropdowns.forEach(dp => {
+                const answer = dp.dataset.answer;
+                dp.dataset.value = answer;
+                dp.classList.remove("incorrect");
+                dp.classList.add("correct");
+
+                const selectedBox = dp.querySelector(".selected-box");
+                selectedBox.innerHTML = `${getMoonSVG(answer, 24)} <span>${answer}</span>`;
+            });
+
+            const msgDiv = document.getElementById("result-msg");
+            msgDiv.style.color = "#60a5fa";
+            msgDiv.innerText = "已順利解鎖正確解答！";
+        }
+
+        function resetForm() {
+            const dropdowns = document.querySelectorAll(".custom-dropdown");
+            dropdowns.forEach(dp => {
+                dp.dataset.value = "";
+                dp.classList.remove("correct", "incorrect");
+                const selectedBox = dp.querySelector(".selected-box");
+                selectedBox.innerHTML = `<span>請選擇</span>`;
+            });
+            document.getElementById("result-msg").innerText = "";
+        }
+
+        window.onload = buildTable;
+    </script>
+</body>
+</html>
