@@ -36,19 +36,10 @@
             width: 100%;
             flex-wrap: wrap;
         }
-        .row-right {
-            justify-content: flex-end;
-        }
         .input-group {
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-        .v-divider {
-            width: 1px;
-            height: 26px;
-            background-color: #ddd;
-            margin: 0 4px;
         }
         input, select, button {
             padding: 8px 10px;
@@ -65,13 +56,8 @@
             align-items: center;
             gap: 4px;
         }
-        .btn-rand {
-            background-color: #8e44ad;
-            color: white;
-            box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3);
-        }
+        .btn-rand { background-color: #8e44ad; color: white; box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3); }
         .btn-rand:hover { background-color: #732d91; }
-        .btn-rand:active { transform: translateY(1px); }
         .btn-pen { background-color: #f39c12; color: white; }
         .btn-pen.active { background-color: #d35400; }
         .btn-pen:hover { opacity: 0.9; }
@@ -114,6 +100,7 @@
             overflow-x: auto;
         }
         #export-area {
+            position: relative; /* 使 Full-page Canvas 以此容器定位 */
             background: white;
             padding: 30px;
             border-radius: 10px;
@@ -165,6 +152,8 @@
             padding: 10px 15px;
             border-radius: 8px;
             border: 1px solid #d0e1fd;
+            position: relative;
+            z-index: 2;
         }
 
         .chart-wrapper {
@@ -186,16 +175,19 @@
             touch-action: none;
         }
 
+        /* 全域畫畫 Canvas 樣式 */
         #drawingCanvas {
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 5;
             pointer-events: none;
             touch-action: none;
         }
         #drawingCanvas.active-draw {
-            z-index: 15;
+            z-index: 100; /* 啟用時覆蓋於所有元件之上 */
             pointer-events: auto;
             cursor: crosshair;
         }
@@ -292,10 +284,6 @@
             user-select: none;
             -webkit-user-select: none;
         }
-        .moon-delete-btn:hover {
-            background-color: #d32f2f;
-            transform: scale(1.15);
-        }
 
         .moon-time {
             width: 62px;
@@ -316,10 +304,6 @@
             z-index: 21;
             box-sizing: border-box;
             display: block;
-        }
-        .moon-time:focus {
-            background: #ffffff;
-            border-color: #008CBA;
         }
 
         .moon-icon {
@@ -382,6 +366,9 @@
 
     <div id="export-area-wrapper">
         <div id="export-area">
+            <!-- 覆蓋整個 export-area 畫面的畫布 -->
+            <canvas id="drawingCanvas"></canvas>
+
             <h2>月亮高度角與方位角觀測記錄</h2>
             <div class="record-info">
                 <span id="dispDate">日期: ____________</span>
@@ -434,7 +421,6 @@
             <div class="chart-wrapper">
                 <div id="y-axis-labels"></div>
                 <div class="chart-container" id="chart">
-                    <canvas id="drawingCanvas" width="800" height="540"></canvas>
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                     </div>
@@ -662,6 +648,7 @@
             }
         });
 
+        /* 全域畫畫邏輯與對齊 */
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         let isPenActive = false;
@@ -669,11 +656,35 @@
         let currentColor = '#ff3b30';
         const strokeWidth = 5;
 
+        function resizeCanvas() {
+            const exportArea = document.getElementById('export-area');
+            if (!exportArea || !canvas) return;
+
+            const targetW = exportArea.offsetWidth;
+            const targetH = exportArea.offsetHeight;
+
+            if (canvas.width !== targetW || canvas.height !== targetH) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (canvas.width > 0 && canvas.height > 0) {
+                    tempCtx.drawImage(canvas, 0, 0);
+                }
+
+                canvas.width = targetW;
+                canvas.height = targetH;
+
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+        }
+
         function togglePen() {
             isPenActive = !isPenActive;
             const btn = document.getElementById('btnTogglePen');
 
             if (isPenActive) {
+                resizeCanvas();
                 btn.innerText = '✏️ 停用畫筆';
                 btn.classList.add('active');
                 canvas.classList.add('active-draw');
@@ -693,14 +704,19 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
             };
         }
 
         function startDrawing(e) {
             if (!isPenActive) return;
+            resizeCanvas();
             isDrawing = true;
             const pos = getCanvasPos(e);
             ctx.beginPath();
@@ -744,6 +760,7 @@
         }, { passive: false });
 
         window.addEventListener('touchend', stopDrawing);
+        window.addEventListener('resize', resizeCanvas);
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -810,6 +827,7 @@
         function initApp() {
             initGrid();
             generateRandomData();
+            resizeCanvas();
         }
 
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
