@@ -98,6 +98,7 @@
             overflow-x: auto;
         }
         #export-area {
+            position: relative; /* 供畫布與內部定位 */
             background: white;
             padding: 30px;
             border-radius: 10px;
@@ -107,6 +108,24 @@
             box-sizing: border-box;
             overflow: visible;
         }
+
+        /* 全區域塗鴉畫布 */
+        #drawingCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+            touch-action: none;
+        }
+        #drawingCanvas.active-draw {
+            z-index: 100; /* 啟用時移至最上層，覆蓋所有輸入框與表格 */
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+
         .record-info {
             display: flex;
             justify-content: space-between;
@@ -165,6 +184,8 @@
             padding: 10px 15px;
             border-radius: 8px;
             border: 1px solid #d0e1fd;
+            position: relative;
+            z-index: 10;
         }
 
         .chart-wrapper {
@@ -184,20 +205,6 @@
             box-sizing: border-box;
             overflow: visible;
             touch-action: none;
-        }
-
-        #drawingCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 5;
-            pointer-events: none;
-            touch-action: none;
-        }
-        #drawingCanvas.active-draw {
-            z-index: 15;
-            pointer-events: auto;
-            cursor: crosshair;
         }
         
         .grid-line-x, .grid-line-y {
@@ -381,6 +388,9 @@
 
     <div id="export-area-wrapper">
         <div id="export-area">
+            <!-- 涵蓋全記錄區域的塗鴉畫布 -->
+            <canvas id="drawingCanvas"></canvas>
+
             <h2>月亮高度角與方位角觀測記錄</h2>
             <div class="record-info">
                 <span id="dispDate">日期: ____________</span>
@@ -644,7 +654,6 @@
             <div class="chart-wrapper">
                 <div id="y-axis-labels"></div>
                 <div class="chart-container" id="chart">
-                    <canvas id="drawingCanvas" width="800" height="540"></canvas>
                     <div class="landscape">
                         <span>🌲</span><span>🏡</span><span>🌳</span><span>🏫</span><span>🌲</span><span>🏘️</span>
                     </div>
@@ -664,6 +673,40 @@
         const yStepSize = chartHeight / ySteps; 
 
         const directions = ['東', '東南', '南', '西南', '西'];
+
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isPenActive = false;
+        let isDrawing = false;
+        let currentColor = '#ff3b30';
+        const strokeWidth = 5;
+
+        // 自動調整畫布解析度與大小，保持塗鴉內容不變形
+        function resizeCanvas() {
+            const exportArea = document.getElementById('export-area');
+            if (!exportArea) return;
+
+            const newWidth = exportArea.offsetWidth;
+            const newHeight = exportArea.offsetHeight;
+
+            if (canvas.width === newWidth && canvas.height === newHeight) return;
+
+            // 暫存畫布內容
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            if (canvas.width > 0 && canvas.height > 0) {
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+
+            // 更新實際解析度
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            // 還原繪圖內容
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
 
         function initGrid() {
             const chart = document.getElementById('chart');
@@ -823,13 +866,6 @@
             }
         });
 
-        const canvas = document.getElementById('drawingCanvas');
-        const ctx = canvas.getContext('2d');
-        let isPenActive = false;
-        let isDrawing = false;
-        let currentColor = '#ff3b30';
-        const strokeWidth = 5;
-
         function togglePen() {
             isPenActive = !isPenActive;
             const btn = document.getElementById('btnTogglePen');
@@ -980,7 +1016,10 @@
 
         function initApp() {
             initGrid();
+            resizeCanvas();
         }
+
+        window.addEventListener('resize', resizeCanvas);
 
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             initApp();
