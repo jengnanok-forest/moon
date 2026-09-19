@@ -3,31 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <title>圖片範例</title>
+    <style>
+        /* 獨立圖片容器的樣式設定 */
+        .image-box {
+            max-width: 100%;       /* 限制容器寬度最大不超過螢幕寬度 */
+            max-height: 80vh;      /* 限制容器高度最大不超過螢幕高度的 80%（可自由調整） */
+            overflow: auto;        /* 當圖片寬度或高度超出容器時，自動產生獨立捲軸 */
+            margin-bottom: 50px;   /* 用 margin 替代大量的 <br>，排版更整齊 */
+            border: 1px dashed #ccc; /* 虛線邊框（可選擇性刪除，僅用來識別容器範圍） */
+        }
+    </style>
 </head>
 <body>
 
- <img src="moonface01.png" width="100%" height="100%"><br><br><br><br><br><br><br><br><br><br>
- <img src="moonface02.png" width="250%" height="250%"><br><br><br><br><br><br><br><br><br><br>
- <img src="moonface03.jpg" width="60%" height="60%"><br><br><br><br><br><br><br><br><br><br><br>
-<img src="moonface04.jpg" width="70%" height="70%"><br><br><br><br><br><br><br><br><br><br><br>
+    <!-- 圖片 1 -->
+    <div class="image-box">
+        <img src="moonface01.png" width="100%" height="100%">
+    </div>
 
-<a href="https://youtu.be/gUsTvhMoTa4?si=8LFHOd5GLRtDD2w7" target="_blank" style="font-size: 128px; font-weight: bold;">
-  點我觀看月相影片 （學校平板無法觀看）
-</a>
+    <!-- 圖片 2（寬度 250% 超出畫面，會在此外框出現專屬捲軸） -->
+    <div class="image-box">
+        <img src="moonface02.png" width="250%" height="250%">
+    </div>
 
-<iframe 
-  width="560" 
-  height="315" 
-  src="https://www.youtube.com/embed/gUsTvhMoTa4" 
-  title="月相影片" 
-  frameborder="0" 
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-  allowfullscreen>
-</iframe>
+    <!-- 圖片 3 -->
+    <div class="image-box">
+        <img src="moonface03.jpg" width="60%" height="60%">
+    </div>
 
+    <!-- 圖片 4 -->
+    <div class="image-box">
+        <img src="moonface04.jpg" width="70%" height="70%">
+    </div>
 
-
-
+    <!-- YouTube 影片 -->
+    <iframe 
+      width="560" 
+      height="315" 
+      src="https://www.youtube.com/embed/gUsTvhMoTa4" 
+      title="月相影片" 
+      frameborder="0" 
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen>
+    </iframe>
 
 </body>
 </html>
