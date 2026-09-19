@@ -1,503 +1,625 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>農曆月相對應互動學習表（密碼保護版）</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>農曆三十日月相變化學習測驗</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            background-color: #0b0f19;
-            color: #f1f5f9;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            margin: 0;
-            min-height: 100vh;
-        }
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 20px;
+      min-height: 100vh;
+    }
 
-        h1 {
-            color: #f8fafc;
-            margin-bottom: 8px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
 
-        p.subtitle {
-            color: #94a3b8;
-            margin-bottom: 20px;
-        }
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
 
-        .action-bar {
-            margin-bottom: 25px;
-            display: flex;
-            gap: 12px;
-        }
+    h1 {
+      font-size: 1.8rem;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
 
-        button {
-            padding: 10px 22px;
-            font-size: 15px;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
 
-        .btn-check { background-color: #10b981; color: white; }
-        .btn-check:hover { background-color: #059669; }
+    /* 操作控制區 */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
 
-        .btn-show { background-color: #3b82f6; color: white; }
-        .btn-show:hover { background-color: #2563eb; }
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        .btn-reset { background-color: #ef4444; color: white; }
-        .btn-reset:hover { background-color: #dc2626; }
+    .btn-primary { background-color: #0284c7; color: #ffffff; }
+    .btn-primary:hover { background-color: #0369a1; }
+    .btn-success { background-color: #16a34a; color: #ffffff; }
+    .btn-success:hover { background-color: #15803d; }
+    .btn-secondary { background-color: #475569; color: #ffffff; }
+    .btn-secondary:hover { background-color: #334155; }
 
-        .table-container {
-            background: #161e2e;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            border: 1px solid #2d3748;
-        }
+    .score-board {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #38bdf8;
+      margin-left: 12px;
+    }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 980px;
-        }
+    /* 30日網格系統 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+    }
 
-        th, td {
-            border: 1px solid #334155;
-            text-align: center;
-            width: 130px;
-            position: relative;
-        }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
 
-        .date-cell {
-            background-color: #1e293b;
-            font-size: 18px;
-            font-weight: bold;
-            color: #e2e8f0;
-            height: 42px;
-        }
+    .card.correct { border-color: #22c55e; background-color: rgba(34, 197, 94, 0.08); }
+    .card.incorrect { border-color: #ef4444; background-color: rgba(239, 68, 68, 0.08); }
 
-        .select-cell {
-            background-color: #0f172a;
-            height: 55px;
-            padding: 4px;
-        }
+    .day-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #e2e8f0;
+      margin-bottom: 8px;
+    }
 
-        .empty-cell {
-            background-color: #090d16;
-        }
+    .moon-display {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
 
-        /* 自訂下拉選單 */
-        .custom-dropdown {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            user-select: none;
-        }
+    /* 下拉選單 */
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
 
-        .selected-box {
-            background-color: #1e293b;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 0 6px;
-            font-size: 13px;
-            color: #f8fafc;
-            transition: all 0.2s ease;
-        }
+    .select-trigger {
+      width: 100%;
+      padding: 6px 8px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-        .selected-box:hover {
-            border-color: #a1a1aa;
-            background-color: #273549;
-        }
+    .select-trigger:hover {
+      border-color: #38bdf8;
+    }
 
-        .options-list {
-            position: absolute;
-            top: 105%;
-            left: 0;
-            right: 0;
-            background-color: #1e293b;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-            z-index: 999;
-            display: none;
-            max-height: 240px;
-            overflow-y: auto;
-        }
+    .select-options {
+      position: absolute;
+      top: 105%;
+      left: 0;
+      right: 0;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 100;
+      display: none;
+      max-height: 220px;
+      overflow-y: auto;
+    }
 
-        .options-list.show { display: block; }
+    .select-options.show {
+      display: block;
+    }
 
-        .option-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            cursor: pointer;
-            font-size: 13px;
-            color: #e2e8f0;
-            transition: background 0.15s;
-        }
+    .option-item {
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
 
-        .option-item:hover {
-            background-color: #334155;
-            color: #ffd700;
-        }
+    .option-item:hover {
+      background: #334155;
+      color: #38bdf8;
+    }
 
-        .custom-dropdown.correct .selected-box {
-            border: 2px solid #10b981 !important;
-            background-color: #064e3b !important;
-        }
+    .feedback-text {
+      font-size: 0.75rem;
+      margin-top: 6px;
+      font-weight: 600;
+      text-align: center;
+      min-height: 18px;
+    }
 
-        .custom-dropdown.incorrect .selected-box {
-            border: 2px solid #ef4444 !important;
-            background-color: #7f1d1d !important;
-        }
+    .feedback-text.correct { color: #4ade80; }
+    .feedback-text.incorrect { color: #f87171; }
 
-        #result-msg {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            min-height: 30px;
-        }
+    /* 自訂解鎖彈窗 (Modal) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
 
-        /* 密碼視窗 Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        }
+    .modal-card {
+      background: #1e2838;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 90%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      animation: modalFadeIn 0.25s ease-out;
+    }
 
-        .modal-overlay.active { display: flex; }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
 
-        .modal-card {
-            background-color: #1e293b;
-            border: 1px solid #475569;
-            padding: 25px;
-            border-radius: 12px;
-            width: 340px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #facc15;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
 
-        .modal-card h3 {
-            margin-top: 0;
-            color: #ffd700;
-            font-size: 20px;
-        }
+    .modal-body {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
 
-        .modal-card p {
-            color: #cbd5e1;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 18px;
-        }
+    .modal-body p {
+      margin-bottom: 6px;
+    }
 
-        .modal-card input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            text-align: center;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background-color: #0f172a;
-            color: #ffffff;
-            outline: none;
-            margin-bottom: 15px;
-        }
+    .modal-body .hint-text {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-top: 12px;
+    }
 
-        .modal-card input:focus {
-            border-color: #3b82f6;
-        }
+    .modal-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1.5px solid #2563eb;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      text-align: center;
+      outline: none;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
 
-        .modal-btns {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
+    .modal-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
 
-        .modal-error {
-            color: #f87171;
-            font-size: 13px;
-            margin-top: 8px;
-            min-height: 20px;
-        }
-    </style>
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-unlock {
+      background-color: #10b981;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      flex: 1;
+      transition: background 0.2s;
+    }
+
+    .btn-unlock:hover {
+      background-color: #059669;
+    }
+
+    .btn-think {
+      background-color: #ef4444;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      flex: 1;
+      transition: background 0.2s;
+    }
+
+    .btn-think:hover {
+      background-color: #dc2626;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>農曆月相對應學習表</h1>
-    <p class="subtitle">根據農曆日期選擇對應月相（黃色表示亮面，黑色表示暗面）：</p>
+<div class="container">
+  <header>
+    <h1>農曆三十日月相變化學習測驗</h1>
+    <p class="subtitle">請為初一至三十選擇正確的月相名稱，完成後點擊核對答案</p>
+  </header>
 
-    <div class="action-bar">
-        <button class="btn-check" onclick="checkAnswers()">驗證答案</button>
-        <button class="btn-show" onclick="openPasswordModal()">顯示正確解答</button>
-        <button class="btn-reset" onclick="resetForm()">重置表格</button>
+  <!-- 操作控制區 -->
+  <div class="controls">
+    <button class="btn btn-primary" onclick="checkAnswers()">✓ 核對答案</button>
+    <button class="btn btn-success" onclick="openPasswordModal()">🔒 顯示正確解答</button>
+    <button class="btn btn-secondary" onclick="resetQuiz()">↺ 重置測驗</button>
+    <span class="score-board" id="scoreBoard"></span>
+  </div>
+
+  <!-- 30日網格系統 -->
+  <div class="grid" id="quizGrid"></div>
+</div>
+
+<!-- 自訂密碼驗證彈窗 (Modal) -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal-card">
+    <div class="modal-title">
+      <span>🌟</span>
+      <span>先想一想喔！</span>
     </div>
-
-    <div class="table-container">
-        <table id="lunarTable"></table>
+    <div class="modal-body">
+      <p>先別急著看答案，再仔細思考看看～</p>
+      <p>相信你一定能靠自己推導出來！💪</p>
+      <p class="hint-text">若確實需要確認答案，請輸入密碼：</p>
     </div>
+    <input type="password" id="modalPasswordInput" class="modal-input" placeholder="請輸入密碼" onkeydown="handleModalKeyDown(event)" />
+    <div class="modal-actions">
+      <button class="btn-unlock" onclick="submitPassword()">確定解鎖</button>
+      <button class="btn-think" onclick="closePasswordModal()">先自己想</button>
+    </div>
+  </div>
+</div>
 
-    <div id="result-msg"></div>
+<script>
+  // 30日標準數據庫
+  const lunarData = [
+    { day: 1, name: "初一", answer: "新月" },
+    { day: 2, name: "初二", answer: "眉月" },
+    { day: 3, name: "初三", answer: "眉月" },
+    { day: 4, name: "初四", answer: "眉月" },
+    { day: 5, name: "初五", answer: "眉月" },
+    { day: 6, name: "初六", answer: "眉月" },
+    { day: 7, name: "初七", answer: "上弦月" },
+    { day: 8, name: "初八", answer: "上弦月" },
+    { day: 9, name: "初九", answer: "盈凸月" },
+    { day: 10, name: "初十", answer: "盈凸月" },
+    { day: 11, name: "十一", answer: "盈凸月" },
+    { day: 12, name: "十二", answer: "盈凸月" },
+    { day: 13, name: "十三", answer: "盈凸月" },
+    { day: 14, name: "十四", answer: "盈凸月" },
+    { day: 15, name: "十五", answer: "滿月" },
+    { day: 16, name: "十六", answer: "滿月" },
+    { day: 17, name: "十七", answer: "虧凸月" },
+    { day: 18, name: "十八", answer: "虧凸月" },
+    { day: 19, name: "十九", answer: "虧凸月" },
+    { day: 20, name: "二十", answer: "虧凸月" },
+    { day: 21, name: "廿一", answer: "虧凸月" },
+    { day: 22, name: "廿二", answer: "下弦月" },
+    { day: 23, name: "廿三", answer: "殘月" },
+    { day: 24, name: "廿四", answer: "殘月" },
+    { day: 25, name: "廿五", answer: "殘月" },
+    { day: 26, name: "廿六", answer: "殘月" },
+    { day: 27, name: "廿七", answer: "殘月" },
+    { day: 28, name: "廿八", answer: "殘月" },
+    { day: 29, name: "廿九", answer: "殘月" },
+    { day: 30, name: "三十", answer: "殘月" }
+  ];
 
-    <!-- 密碼解鎖對話視窗 -->
-    <div class="modal-overlay" id="pwdModal">
-        <div class="modal-card">
-            <h3>🌟 先想一想喔！</h3>
-            <p>先別急著看答案，再仔細思考看看～<br>相信你一定能靠自己推導出來！💪<br><br>若確實需要確認答案，請輸入密碼：</p>
-            <input type="password" id="pwdInput" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter') submitPassword()">
-            <div class="modal-btns">
-                <button class="btn-check" onclick="submitPassword()">確定解鎖</button>
-                <button class="btn-reset" onclick="closePasswordModal()">先自己想</button>
-            </div>
-            <div class="modal-error" id="pwdError"></div>
+  // 選項清單
+  const moonOptions = [
+    { value: "新月", label: "新月 (朔)" },
+    { value: "眉月", label: "眉月" },
+    { value: "上弦月", label: "上弦月" },
+    { value: "盈凸月", label: "盈凸月" },
+    { value: "滿月", label: "滿月 (望)" },
+    { value: "虧凸月", label: "虧凸月" },
+    { value: "下弦月", label: "下弦月" },
+    { value: "殘月", label: "殘月" }
+  ];
+
+  const darkColor = "#0b0f19";
+  const lightColor = "#FFD700";
+  const strokeColor = "#64748b";
+
+  function getPlaceholderSVG(size = 32) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
+  }
+
+  function getStandardMoonSVG(phase, size = 32) {
+    let path = "";
+    if (phase === "新月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/>`;
+    } else if (phase === "眉月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${lightColor}"/>`;
+    } else if (phase === "上弦月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 Z" fill="${lightColor}"/>`;
+    } else if (phase === "盈凸月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${darkColor}"/>`;
+    } else if (phase === "滿月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/>`;
+    } else if (phase === "虧凸月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${darkColor}"/>`;
+    } else if (phase === "下弦月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 Z" fill="${lightColor}"/>`;
+    } else if (phase === "殘月") {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${lightColor}"/>`;
+    } else {
+      return getPlaceholderSVG(size);
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32">${path}</svg>`;
+  }
+
+  function getDayMoonSVG(dayNum, size = 32) {
+    let path = "";
+    if (dayNum === 1) {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/>`;
+    } else if (dayNum >= 2 && dayNum <= 6) {
+      const rxMap = { 2: 12.0, 3: 9.5, 4: 7.0, 5: 4.5, 6: 2.0 };
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A ${rxMap[dayNum]} 14 0 0 0 16 2 Z" fill="${lightColor}"/>`;
+    } else if (dayNum === 7 || dayNum === 8) {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 Z" fill="${lightColor}"/>`;
+    } else if (dayNum >= 9 && dayNum <= 14) {
+      const rxMap = { 9: 2.0, 10: 4.5, 11: 7.0, 12: 9.0, 13: 11.0, 14: 12.5 };
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A ${rxMap[dayNum]} 14 0 0 1 16 2 Z" fill="${darkColor}"/>`;
+    } else if (dayNum === 15 || dayNum === 16) {
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/>`;
+    } else if (dayNum >= 17 && dayNum <= 21) {
+      const rxMap = { 17: 12.5, 18: 11.0, 19: 8.5, 20: 6.0, 21: 3.0 };
+      path = `<circle cx="16" cy="16" r="14" fill="${lightColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A ${rxMap[dayNum]} 14 0 0 0 16 2 Z" fill="${darkColor}"/>`;
+    } else if (dayNum === 22) {
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 Z" fill="${lightColor}"/>`;
+    } else if (dayNum >= 23 && dayNum <= 30) {
+      const rxMap = { 23: 2.0, 24: 4.5, 25: 6.5, 26: 8.5, 27: 10.0, 28: 11.2, 29: 12.2, 30: 13.0 };
+      path = `<circle cx="16" cy="16" r="14" fill="${darkColor}" stroke="${strokeColor}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A ${rxMap[dayNum]} 14 0 0 1 16 2 Z" fill="${lightColor}"/>`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32">${path}</svg>`;
+  }
+
+  const userSelections = new Array(30).fill("");
+
+  function initQuizGrid() {
+    const grid = document.getElementById("quizGrid");
+    grid.innerHTML = "";
+
+    lunarData.forEach((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.id = `card-${idx}`;
+
+      card.innerHTML = `
+        <div class="day-title">${item.name}</div>
+        <div class="moon-display" id="display-${idx}">
+          ${getPlaceholderSVG(32)}
         </div>
-    </div>
+        <div class="custom-select">
+          <button class="select-trigger" id="trigger-${idx}" onclick="toggleDropdown(${idx}, event)">
+            <span id="trigger-text-${idx}">請選擇</span>
+            <span style="font-size:0.7rem;">▼</span>
+          </button>
+          <div class="select-options" id="options-${idx}">
+            ${moonOptions.map(opt => `
+              <div class="option-item" onclick="selectOption(${idx}, '${opt.value}', '${opt.label}', event)">
+                ${getStandardMoonSVG(opt.value, 18)}                 <span>${opt.label}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="feedback-text" id="feedback-${idx}"></div>
+      `;
 
-    <script>
-        function getMoonSVG(phase, size = 26) {
-            const dark = "#0b0f19";
-            const light = "#FFD700";
-            const stroke = "#64748b";
+      grid.appendChild(card);
+    });
+  }
 
-            if (!phase) return '';
+  function toggleDropdown(idx, event) {
+    event.stopPropagation();
+    document.querySelectorAll(".select-options").forEach((el, i) => {
+      if (i !== idx) el.classList.remove("show");
+    });
+    const optionsEl = document.getElementById(`options-${idx}`);
+    optionsEl.classList.toggle("show");
+  }
 
-            switch(phase) {
-                case "新月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/></svg>`;
-                case "眉月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${light}"/></svg>`;
-                case "上弦月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 Z" fill="${light}"/></svg>`;
-                case "盈凸月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${dark}"/></svg>`;
-                case "滿月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/></svg>`;
-                case "虧凸月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${light}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 1 16 30 A 7 14 0 0 0 16 2 Z" fill="${dark}"/></svg>`;
-                case "下弦月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 Z" fill="${light}"/></svg>`;
-                case "殘月":
-                    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${dark}" stroke="${stroke}" stroke-width="1.2"/><path d="M 16 2 A 14 14 0 0 0 16 30 A 7 14 0 0 1 16 2 Z" fill="${light}"/></svg>`;
-                default:
-                    return '';
-            }
-        }
+  function selectOption(idx, value, label, event) {
+    event.stopPropagation();
+    userSelections[idx] = value;
 
-        const moonOptions = [
-            { label: "新月 / 朔", value: "新月" },
-            { label: "眉月", value: "眉月" },
-            { label: "上弦月", value: "上弦月" },
-            { label: "盈凸月", value: "盈凸月" },
-            { label: "滿月 / 望", value: "滿月" },
-            { label: "虧凸月", value: "虧凸月" },
-            { label: "下弦月", value: "下弦月" },
-            { label: "殘月", value: "殘月" }
-        ];
+    document.getElementById(`trigger-text-${idx}`).textContent = label.split(' ')[0];
 
-        const lunarData = [
-            { day: "初一", phase: "新月" }, { day: "初二", phase: "眉月" },
-            { day: "初三", phase: "眉月" }, { day: "初四", phase: "眉月" },
-            { day: "初五", phase: "眉月" }, { day: "初六", phase: "眉月" },
-            { day: "初七", phase: "上弦月" }, { day: "初八", phase: "上弦月" },
-            { day: "初九", phase: "盈凸月" }, { day: "初十", phase: "盈凸月" },
-            { day: "十一", phase: "盈凸月" }, { day: "十二", phase: "盈凸月" },
-            { day: "十三", phase: "盈凸月" }, { day: "十四", phase: "盈凸月" },
-            { day: "十五", phase: "滿月" }, { day: "十六", phase: "滿月" },
-            { day: "十七", phase: "虧凸月" }, { day: "十八", phase: "虧凸月" },
-            { day: "十九", phase: "虧凸月" }, { day: "二十(廿)", phase: "虧凸月" },
-            { day: "二十一", phase: "虧凸月" }, { day: "二十二", phase: "下弦月" },
-            { day: "二十三", phase: "下弦月" }, { day: "二十四", phase: "殘月" },
-            { day: "二十五", phase: "殘月" }, { day: "二十六", phase: "殘月" },
-            { day: "二十七", phase: "殘月" }, { day: "二十八", phase: "殘月" },
-            { day: "二十九", phase: "殘月" }, { day: "三十(卅)", phase: "新月" },
-            { day: "", phase: null }, { day: "", phase: null },
-            { day: "", phase: null }, { day: "", phase: null }, { day: "", phase: null }
-        ];
+    const dayNum = idx + 1;
+    const correctAnswer = lunarData[idx].answer;
 
-        function buildTable() {
-            const table = document.getElementById("lunarTable");
-            table.innerHTML = "";
-            const colsPerRow = 7;
-            const totalRows = Math.ceil(lunarData.length / colsPerRow);
+    if (value === correctAnswer) {
+      document.getElementById(`display-${idx}`).innerHTML = getDayMoonSVG(dayNum, 32);
+    } else {
+      document.getElementById(`display-${idx}`).innerHTML = getStandardMoonSVG(value, 32);
+    }
 
-            for (let r = 0; r < totalRows; r++) {
-                const dateRow = document.createElement("tr");
-                for (let c = 0; c < colsPerRow; c++) {
-                    const idx = r * colsPerRow + c;
-                    const td = document.createElement("td");
-                    td.className = "date-cell";
-                    if (idx < lunarData.length && lunarData[idx].day !== "") {
-                        td.innerText = lunarData[idx].day;
-                    } else {
-                        td.className = "empty-cell";
-                    }
-                    dateRow.appendChild(td);
-                }
-                table.appendChild(dateRow);
+    document.getElementById(`options-${idx}`).classList.remove("show");
 
-                const selectRow = document.createElement("tr");
-                for (let c = 0; c < colsPerRow; c++) {
-                    const idx = r * colsPerRow + c;
-                    const td = document.createElement("td");
-                    td.className = "select-cell";
+    const card = document.getElementById(`card-${idx}`);
+    card.classList.remove("correct", "incorrect");
+    document.getElementById(`feedback-${idx}`).textContent = "";
+  }
 
-                    if (idx < lunarData.length && lunarData[idx].day !== "") {
-                        td.appendChild(createCustomDropdown(idx, lunarData[idx].phase));
-                    } else {
-                        td.className = "empty-cell";
-                    }
-                    selectRow.appendChild(td);
-                }
-                table.appendChild(selectRow);
-            }
-        }
+  window.addEventListener("click", () => {
+    document.querySelectorAll(".select-options").forEach(el => el.classList.remove("show"));
+  });
 
-        function createCustomDropdown(idx, answer) {
-            const container = document.createElement("div");
-            container.className = "custom-dropdown";
-            container.id = `dropdown-${idx}`;
-            container.dataset.answer = answer;
-            container.dataset.value = "";
+  function checkAnswers() {
+    let score = 0;
+    lunarData.forEach((item, idx) => {
+      const card = document.getElementById(`card-${idx}`);
+      const feedback = document.getElementById(`feedback-${idx}`);
+      const selected = userSelections[idx];
 
-            const selectedBox = document.createElement("div");
-            selectedBox.className = "selected-box";
-            selectedBox.innerHTML = `<span>請選擇</span>`;
+      card.classList.remove("correct", "incorrect");
 
-            const optionsList = document.createElement("div");
-            optionsList.className = "options-list";
+      if (!selected) {
+        card.classList.add("incorrect");
+        feedback.textContent = "未作答";
+        feedback.className = "feedback-text incorrect";
+      } else if (selected === item.answer) {
+        score++;
+        card.classList.add("correct");
+        feedback.textContent = "✓ 正確";
+        feedback.className = "feedback-text correct";
+      } else {
+        card.classList.add("incorrect");
+        feedback.textContent = `✗ 應為:${item.answer}`;
+        feedback.className = "feedback-text incorrect";
+      }
+    });
 
-            moonOptions.forEach(opt => {
-                const item = document.createElement("div");
-                item.className = "option-item";
-                item.innerHTML = `${getMoonSVG(opt.value, 22)} <span>${opt.label}</span>`;
-                
-                item.onclick = (e) => {
-                    e.stopPropagation();
-                    container.dataset.value = opt.value;
-                    selectedBox.innerHTML = `${getMoonSVG(opt.value, 24)} <span>${opt.value}</span>`;
-                    container.classList.remove("correct", "incorrect");
-                    optionsList.classList.remove("show");
-                };
-                optionsList.appendChild(item);
-            });
+    const scoreBoard = document.getElementById("scoreBoard");
+    scoreBoard.textContent = `得分：${score} / 30 (${Math.round((score / 30) * 100)}分)`;
+  }
 
-            selectedBox.onclick = (e) => {
-                e.stopPropagation();
-                document.querySelectorAll(".options-list").forEach(el => {
-                    if (el !== optionsList) el.classList.remove("show");
-                });
-                optionsList.classList.toggle("show");
-            };
+  /* 彈窗對話框邏輯 */
+  function openPasswordModal() {
+    const modal = document.getElementById("passwordModal");
+    const pwdInput = document.getElementById("modalPasswordInput");
+    pwdInput.value = "";
+    modal.style.display = "flex";
+    setTimeout(() => pwdInput.focus(), 50);
+  }
 
-            container.appendChild(selectedBox);
-            container.appendChild(optionsList);
-            return container;
-        }
+  function closePasswordModal() {
+    document.getElementById("passwordModal").style.display = "none";
+  }
 
-        document.addEventListener("click", () => {
-            document.querySelectorAll(".options-list").forEach(el => el.classList.remove("show"));
-        });
+  function handleModalKeyDown(event) {
+    if (event.key === "Enter") {
+      submitPassword();
+    }
+  }
 
-        function checkAnswers() {
-            const dropdowns = document.querySelectorAll(".custom-dropdown");
-            let correctCount = 0;
+  function submitPassword() {
+    const pwdInput = document.getElementById("modalPasswordInput");
+    const val = pwdInput.value.trim();
 
-            dropdowns.forEach(dp => {
-                const userChoice = dp.dataset.value;
-                const correctAnswer = dp.dataset.answer;
+    if (val === "jsps") {
+      closePasswordModal();
+      showAnswers();
+    } else {
+      alert("🔒 密碼不正確喔！給自己再一次思考的機會，加油！");
+      pwdInput.focus();
+    }
+  }
 
-                dp.classList.remove("correct", "incorrect");
+  // 顯示解答
+  function showAnswers() {
+    lunarData.forEach((item, idx) => {
+      userSelections[idx] = item.answer;
+      const opt = moonOptions.find(o => o.value === item.answer);
+      document.getElementById(`trigger-text-${idx}`).textContent = opt ? opt.label.split(' ')[0] : item.answer;
+      document.getElementById(`display-${idx}`).innerHTML = getDayMoonSVG(idx + 1, 32);
 
-                if (userChoice === correctAnswer) {
-                    dp.classList.add("correct");
-                    correctCount++;
-                } else {
-                    dp.classList.add("incorrect");
-                }
-            });
+      const card = document.getElementById(`card-${idx}`);
+      const feedback = document.getElementById(`feedback-${idx}`);
+      card.classList.remove("incorrect");
+      card.classList.add("correct");
+      feedback.textContent = `✓ ${item.answer}`;
+      feedback.className = "feedback-text correct";
+    });
 
-            const msgDiv = document.getElementById("result-msg");
-            if (correctCount === dropdowns.length) {
-                msgDiv.style.color = "#34d399";
-                msgDiv.innerText = `🎉 太棒了！全部回答正確！（${correctCount} / ${dropdowns.length}）`;
-            } else {
-                msgDiv.style.color = "#f87171";
-                msgDiv.innerText = `💪 答對 ${correctCount} / ${dropdowns.length} 題，紅色外框表示答錯或未答。`;
-            }
-        }
+    document.getElementById("scoreBoard").textContent = "已自動顯示解答 (30 / 30)";
+  }
 
-        /* 密碼解鎖視窗邏輯 */
-        function openPasswordModal() {
-            document.getElementById("pwdModal").classList.add("active");
-            document.getElementById("pwdInput").value = "";
-            document.getElementById("pwdError").innerText = "";
-            document.getElementById("pwdInput").focus();
-        }
+  function resetQuiz() {
+    userSelections.fill("");
+    lunarData.forEach((item, idx) => {
+      document.getElementById(`trigger-text-${idx}`).textContent = "請選擇";
+      document.getElementById(`display-${idx}`).innerHTML = getPlaceholderSVG(32);
 
-        function closePasswordModal() {
-            document.getElementById("pwdModal").classList.remove("active");
-        }
+      const card = document.getElementById(`card-${idx}`);
+      const feedback = document.getElementById(`feedback-${idx}`);
+      card.classList.remove("correct", "incorrect");
+      feedback.textContent = "";
+    });
 
-        function submitPassword() {
-            const inputVal = document.getElementById("pwdInput").value;
-            if (inputVal === "jsps") {
-                closePasswordModal();
-                showAnswers();
-            } else {
-                document.getElementById("pwdError").innerText = "❌ 密碼錯誤，再多思考嘗試看看喔！";
-            }
-        }
+    document.getElementById("scoreBoard").textContent = "";
+  }
 
-        function showAnswers() {
-            const dropdowns = document.querySelectorAll(".custom-dropdown");
-            dropdowns.forEach(dp => {
-                const answer = dp.dataset.answer;
-                dp.dataset.value = answer;
-                dp.classList.remove("incorrect");
-                dp.classList.add("correct");
+  initQuizGrid();
+</script>
 
-                const selectedBox = dp.querySelector(".selected-box");
-                selectedBox.innerHTML = `${getMoonSVG(answer, 24)} <span>${answer}</span>`;
-            });
-
-            const msgDiv = document.getElementById("result-msg");
-            msgDiv.style.color = "#60a5fa";
-            msgDiv.innerText = "已順利解鎖正確解答！";
-        }
-
-        function resetForm() {
-            const dropdowns = document.querySelectorAll(".custom-dropdown");
-            dropdowns.forEach(dp => {
-                dp.dataset.value = "";
-                dp.classList.remove("correct", "incorrect");
-                const selectedBox = dp.querySelector(".selected-box");
-                selectedBox.innerHTML = `<span>請選擇</span>`;
-            });
-            document.getElementById("result-msg").innerText = "";
-        }
-
-        window.onload = buildTable;
-    </script>
 </body>
 </html>
