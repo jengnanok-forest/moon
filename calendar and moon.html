@@ -12,10 +12,6 @@
       padding: 0;
     }
 
-    html {
-      height: 100%;
-    }
-
     body {
       font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
       background-color: #0f172a;
@@ -23,7 +19,6 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh;
       overflow: hidden;
       user-select: none;
     }
@@ -38,7 +33,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       z-index: 30;
       gap: 15px;
-      flex-shrink: 0; /* 防止 Safari 縮放時擠壓標題列 */
     }
 
     h1 {
@@ -268,7 +262,6 @@
       flex: 1;
       position: relative;
       overflow: hidden;
-      min-height: 0;
     }
 
     #drawingCanvas {
@@ -462,16 +455,25 @@
     }
 
     .moon-icon {
-      font-size: 2.1rem;
-      line-height: 1.1;
-      margin-bottom: 1px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 44px;
+      margin-bottom: 2px;
     }
 
     .moon-name {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #a5b4fc;
       letter-spacing: 0.5px;
+    }
+
+    .moon-pct {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #38bdf8;
+      margin-top: 1px;
     }
 
     /* ==================== 底部控制軸 ==================== */
@@ -484,7 +486,6 @@
       gap: 4px;
       border-top: 1px solid #1e293b;
       z-index: 30;
-      flex-shrink: 0; /* 防止 Safari 縮放時擠壓控制欄 */
     }
 
     .slider-title {
@@ -557,10 +558,10 @@
       <!-- 紀年切換按鈕 -->
       <button class="btn-era-toggle" id="btnEraToggle">🌐 紀年: 西元</button>
 
-      <!-- 1. 西元日期選擇器 (造型比照附圖) -->
+      <!-- 1. 西元日期選擇器 -->
       <input type="date" id="startDate" class="styled-date-input">
 
-      <!-- 2. 民國日期選擇器 (擬真膠囊造型) -->
+      <!-- 2. 民國日期選擇器 -->
       <div class="roc-date-picker-box" id="rocDatePickerBox">
         <input type="number" id="rocYear" style="width: 36px;" placeholder="115" min="1" max="999">
         <span class="slash">/</span>
@@ -644,16 +645,86 @@
       }
     }
 
+    // ==================== 精確修正後的動態 SVG 月相繪製 ====================
     function getMoonPhase(dayNum) {
-      if (dayNum === 1) return { icon: "🌑", name: "新月 (朔)" };
-      if (dayNum >= 2 && dayNum <= 6) return { icon: "🌒", name: "蛾眉月" };
-      if (dayNum >= 7 && dayNum <= 8) return { icon: "🌓", name: "上弦月" };
-      if (dayNum >= 9 && dayNum <= 14) return { icon: "🌔", name: "盈凸月" };
-      if (dayNum === 15 || dayNum === 16) return { icon: "🌕", name: "滿月 (望)" };
-      if (dayNum >= 17 && dayNum <= 21) return { icon: "🌖", name: "虧凸月" };
-      if (dayNum >= 22 && dayNum <= 23) return { icon: "🌗", name: "下弦月" };
-      if (dayNum >= 24) return { icon: "🌘", name: "殘月" };
-      return { icon: "🌑", name: "新月" };
+      // 朔望月週期約 29.53 天，計算 phase 比率 p (0.0 ~ 1.0)
+      const p = ((dayNum - 1) % 29.53) / 29.53;
+      const r = 18;
+      const cx = 20, cy = 20;
+      const topY = cy - r; // 2
+      const botY = cy + r; // 38
+      
+      // 計算真實照亮百分比 (0 ~ 100%)
+      const illumPct = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100);
+      const cosVal = Math.cos(2 * Math.PI * p);
+      const rx = (r * Math.abs(cosVal)).toFixed(2);
+
+      let d = "";
+
+      if (illumPct === 0 && dayNum === 1) {
+        // 初一 (0%)：完全無光亮
+        d = "";
+      } else if (illumPct === 100) {
+        // 滿月 (100%)：完整黃色圓形
+        d = `M ${cx} ${topY} A ${r} ${r} 0 1 1 ${cx} ${botY} A ${r} ${r} 0 1 1 ${cx} ${topY} Z`;
+      } else if (p < 0.5) {
+        // 漸盈 (Waxing)：右側受光
+        const outer = `M ${cx} ${topY} A ${r} ${r} 0 0 1 ${cx} ${botY}`;
+        let inner = "";
+        if (cosVal > 0) {
+          // 蛾眉月 (0% ~ 50%)：晨昏線向右彎曲 (sweep=0)
+          inner = `A ${rx} ${r} 0 0 0 ${cx} ${topY}`;
+        } else {
+          // 盈凸月 (50% ~ 100%)：晨昏線向左彎曲 (sweep=1)
+          inner = `A ${rx} ${r} 0 0 1 ${cx} ${topY}`;
+        }
+        d = `${outer} ${inner} Z`;
+      } else {
+        // 漸虧 (Waning)：左側受光 (含 24~30 日殘月)
+        const outer = `M ${cx} ${topY} A ${r} ${r} 0 0 0 ${cx} ${botY}`;
+        let inner = "";
+        if (cosVal < 0) {
+          // 虧凸月 (100% ~ 50%)：晨昏線向右彎曲 (sweep=0)
+          inner = `A ${rx} ${r} 0 0 0 ${cx} ${topY}`;
+        } else {
+          // 殘月 (50% ~ 0%)：晨昏線向左彎曲 (sweep=1)
+          inner = `A ${rx} ${r} 0 0 1 ${cx} ${topY}`;
+        }
+        d = `${outer} ${inner} Z`;
+      }
+
+      // 組合動態 SVG 向量圖
+      const svg = `
+        <svg width="40" height="40" viewBox="0 0 40 40" style="filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.3));">
+          <!-- 底圖：深色月球暗面 -->
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="#1e293b" stroke="#475569" stroke-width="1.2"/>
+          <!-- 亮面：黃色光照區域 -->
+          ${d ? `<path d="${d}" fill="#fef08a" />` : ''}
+        </svg>
+      `;
+
+      // 月相名稱判定 (嚴格依據農曆日)
+      let name = "殘月";
+      if (dayNum === 1) {
+        name = "新月 (朔)";
+      } else if (dayNum >= 2 && dayNum <= 6) {
+        name = "蛾眉月";
+      } else if (dayNum >= 7 && dayNum <= 8) {
+        name = "上弦月";
+      } else if (dayNum >= 9 && dayNum <= 14) {
+        name = "盈凸月";
+      } else if (dayNum === 15 || dayNum === 16) {
+        name = "滿月 (望)";
+      } else if (dayNum >= 17 && dayNum <= 21) {
+        name = "虧凸月";
+      } else if (dayNum >= 22 && dayNum <= 23) {
+        name = "下弦月";
+      } else if (dayNum >= 24) {
+        // 含農曆三十：固定為殘月
+        name = "殘月";
+      }
+
+      return { svg, name, illumPct };
     }
 
     function formatDateKey(date) {
@@ -729,14 +800,15 @@
         <div class="lunar-text">${lunarInfo.dayStr}</div>
       `;
 
-      // 3. 月相 Cell
+      // 3. 月相 Cell (使用精確的 SVG 動態月相)
       const moonInfo = getMoonPhase(lunarInfo.dayNum);
       const mCell = document.createElement('td');
       mCell.className = `date-cell ${isSelected ? 'is-selected-day' : ''}`;
       mCell.dataset.date = dateKey;
       mCell.innerHTML = `
-        <div class="moon-icon">${moonInfo.icon}</div>
+        <div class="moon-icon">${moonInfo.svg}</div>
         <div class="moon-name">${moonInfo.name}</div>
+        <div class="moon-pct">${moonInfo.illumPct}% 照亮</div>
       `;
 
       const handleClick = () => {
@@ -843,16 +915,13 @@
       isLoading = true;
 
       const oldScrollWidth = calendarContainer.scrollWidth;
-      const refSolar = solarRow.children[1];
-      const refLunar = lunarRow.children[1];
-      const refMoon = moonRow.children[1];
 
       for (let i = 0; i < count; i++) {
         firstLoadedDate.setDate(firstLoadedDate.getDate() - 1);
         const { sCell, lCell, mCell } = createCellTriplet(new Date(firstLoadedDate));
-        solarRow.insertBefore(sCell, refSolar);
-        lunarRow.insertBefore(lCell, refLunar);
-        moonRow.insertBefore(mCell, refMoon);
+        solarRow.insertBefore(sCell, solarRow.children[1]);
+        lunarRow.insertBefore(lCell, lunarRow.children[1]);
+        moonRow.insertBefore(mCell, moonRow.children[1]);
       }
 
       const newScrollWidth = calendarContainer.scrollWidth;
